@@ -1,0 +1,28 @@
+# ===== Compilados / build =====
+target/
+*.jar
+*.war
+*.class
+
+# ===== IntelliJ IDEA (contiene config local y credenciales) =====
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# ===== Maven =====
+.mvn/
+!.mvn/wrapper/maven-wrapper.jar
+
+# ===== Variables de entorno / secretos =====
+.env
+*.env
+application-local.properties
+
+# ===== Logs y temporales =====
+*.log
+logs/
+
+# ===== Sistema operativo =====
+.DS_Store
+Thumbs.db

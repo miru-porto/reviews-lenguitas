@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>Reviews - Rate My Prof</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav>
+        <div>
+            <a href="/" class="brand">Rate My Prof</a>
+            <a th:href="@{/materias}">Materias</a>
+        </div>
+        <div>
+            <a sec:authorize="isAnonymous()" th:href="@{/login}">Iniciar sesión</a>
+            <a sec:authorize="isAuthenticated()" th:href="@{/logout}">Cerrar sesión</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <a th:href="@{/materias/{id}(id=${catedra.materia.id})}" style="color: #666; text-decoration: none;">
+            ← Volver a <span th:text="${catedra.materia.nombre}">materia</span>
+        </a>
+
+        <h2 style="margin: 1rem 0;">
+            <span th:text="${catedra.profesor.apellido + ', ' + catedra.profesor.nombre}">García, María</span>
+        </h2>
+        <p style="color: #666; margin-bottom: 1rem;" th:text="${catedra.materia.nombre}">Fonética</p>
+
+        <div th:if="${param.exito}" class="alert alert-success">
+            ¡Tu review se publicó correctamente!
+        </div>
+
+        <a sec:authorize="isAuthenticated()"
+           th:href="@{/review/nueva/{id}(id=${catedra.id})}"
+           class="btn btn-success" style="margin-bottom: 1.5rem;">
+            Dejar mi review
+        </a>
+        <p sec:authorize="isAnonymous()" style="margin-bottom: 1.5rem;">
+            <a th:href="@{/login}">Iniciá sesión</a> para dejar tu review.
+        </p>
+
+        <h3 style="margin-bottom: 1rem;">Reviews</h3>
+
+        <div th:each="review : ${reviews}" class="card">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                <strong th:text="${review.usuario.nombre}">Juan</strong>
+                <span class="stars" th:text="${'★'.repeat(review.puntuacion)}">★★★</span>
+            </div>
+            <p th:text="${review.comentario}">Muy buen profesor...</p>
+            <small style="color: #999;" th:text="${#temporals.format(review.fechaCreacion, 'dd/MM/yyyy')}">01/01/2025</small>
+        </div>
+
+        <p th:if="${#lists.isEmpty(reviews)}" style="color: #999;">
+            Todavía no hay reviews. ¡Sé el primero!
+        </p>
+    </div>
+</body>
+</html>
