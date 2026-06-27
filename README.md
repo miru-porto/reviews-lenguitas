@@ -6,7 +6,7 @@ Sitio web de reviews de profesores del colegio Lenguas Vivas.
 
 - Java 17+
 - Maven 3.8+
-- MySQL 8+
+- PostgreSQL 14+
 
 ## Setup rápido
 
@@ -18,11 +18,14 @@ CREATE DATABASE rate_my_prof;
 
 ### 2. Configurar credenciales
 
-Editar `src/main/resources/application.properties` y cambiar:
+La app lee la conexión desde variables de entorno, con valores por
+defecto para correr en local (ver `src/main/resources/application.properties`).
+Para usar tus propias credenciales, definí estas variables:
 
 ```properties
-spring.datasource.username=root
-spring.datasource.password=tu_password_aqui
+SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/rate_my_prof
+SPRING_DATASOURCE_USERNAME=postgres
+SPRING_DATASOURCE_PASSWORD=tu_password_aqui
 ```
 
 ### 3. Ejecutar la app
@@ -35,7 +38,7 @@ La app arranca en `http://localhost:8080`
 
 ### 4. Cargar datos de prueba (opcional)
 
-Ejecutar `src/main/resources/data-seed.sql` en MySQL para tener
+Ejecutar `src/main/resources/data-seed.sql` en PostgreSQL para tener
 materias, profesores y cátedras de ejemplo.
 
 ## Estructura del proyecto
