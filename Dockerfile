@@ -1,5 +1,5 @@
-# ===== Etapa 1: compilar el .jar con Maven y Java 17 =====
-FROM maven:3.9-eclipse-temurin-17 AS build
+# ===== Etapa 1: compilar el .jar con Maven y Java 21 =====
+FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
 # Copiamos primero el pom para cachear las dependencias
 COPY pom.xml .
@@ -9,7 +9,7 @@ COPY src ./src
 RUN mvn clean package -DskipTests -B
 
 # ===== Etapa 2: imagen liviana solo con el runtime de Java =====
-FROM eclipse-temurin:17-jre
+FROM eclipse-temurin:21-jre
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 # Render inyecta la variable PORT; la app la respeta (ver application.properties)
