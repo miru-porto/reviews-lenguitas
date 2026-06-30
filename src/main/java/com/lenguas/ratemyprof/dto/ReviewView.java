@@ -10,8 +10,11 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class ReviewView {
+    private Long id;
     private String autor;
     private Integer puntuacion;
     private String comentario;
     private String fecha;
+    /** true si la review pertenece al usuario logueado (para mostrarle editar/borrar). */
+    private boolean esMia;
 }

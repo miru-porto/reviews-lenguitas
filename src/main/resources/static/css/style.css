@@ -75,6 +75,9 @@ nav .brand { font-size: 1.2rem; font-weight: bold; }
 .btn:hover { background: #34495e; }
 .btn-success { background: #27ae60; }
 .btn-success:hover { background: #2ecc71; }
+.btn-danger { background: #e74c3c; }
+.btn-danger:hover { background: #c0392b; }
+.btn-small { padding: 0.35rem 0.9rem; font-size: 0.85rem; }
 
 /* ===== Mensajes ===== */
 .alert {

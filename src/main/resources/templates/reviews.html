@@ -30,6 +30,12 @@
         <div th:if="${param.exito}" class="alert alert-success">
             ¡Tu review se publicó correctamente!
         </div>
+        <div th:if="${param.editado}" class="alert alert-success">
+            Tu review se actualizó correctamente.
+        </div>
+        <div th:if="${param.borrado}" class="alert alert-success">
+            Tu review se eliminó.
+        </div>
 
         <a sec:authorize="isAuthenticated()"
            th:href="@{/review/nueva/{id}(id=${catedra.catedraId})}"
@@ -69,6 +75,13 @@
             </div>
             <p th:text="${review.comentario}">Muy buen profesor...</p>
             <small style="color: #999;" th:text="${review.fecha}">01/01/2025</small>
+            <div th:if="${review.esMia}" style="margin-top: 0.8rem; display: flex; gap: 0.5rem; align-items: center;">
+                <a th:href="@{/review/{id}/editar(id=${review.id})}" class="btn btn-small">Editar</a>
+                <form th:action="@{/review/{id}/borrar(id=${review.id})}" method="post"
+                      onsubmit="return confirm('¿Seguro que querés borrar tu review?');">
+                    <button type="submit" class="btn btn-small btn-danger">Borrar</button>
+                </form>
+            </div>
         </div>
 
         <p th:if="${#lists.isEmpty(reviews)}" style="color: #999;">
