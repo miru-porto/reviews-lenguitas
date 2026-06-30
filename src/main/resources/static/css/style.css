@@ -84,6 +84,7 @@ nav .brand { font-size: 1.2rem; font-weight: bold; }
 }
 .alert-error { background: #fdecea; color: #c0392b; border: 1px solid #e74c3c; }
 .alert-success { background: #eafaf1; color: #27ae60; border: 1px solid #27ae60; }
+.field-error { display: block; margin-top: 0.3rem; color: #c0392b; font-size: 0.85rem; }
 
 /* ===== Lista de materias ===== */
 .materia-link {

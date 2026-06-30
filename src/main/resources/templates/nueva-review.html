@@ -23,26 +23,26 @@
         <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
 
         <div class="card">
-            <div th:action="@{/review/nueva/{id}(id=${catedra.id})}" th:attr="data-action=@{/review/nueva/{id}(id=${catedra.id})}">
-                <form th:action="@{/review/nueva/{id}(id=${catedra.id})}" method="post">
-                    <div class="form-group">
-                        <label>Puntuación</label>
-                        <select name="puntuacion" required>
-                            <option value="">Elegí una puntuación</option>
-                            <option value="1">★ — Muy malo</option>
-                            <option value="2">★★ — Malo</option>
-                            <option value="3">★★★ — Regular</option>
-                            <option value="4">★★★★ — Bueno</option>
-                            <option value="5">★★★★★ — Excelente</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Tu opinión</label>
-                        <textarea name="comentario" placeholder="Contá tu experiencia con este profesor..." required></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-success">Publicar review</button>
-                </form>
-            </div>
+            <form th:action="@{/review/nueva/{id}(id=${catedra.id})}" th:object="${reviewForm}" method="post">
+                <div class="form-group">
+                    <label>Puntuación</label>
+                    <select th:field="*{puntuacion}">
+                        <option value="">Elegí una puntuación</option>
+                        <option value="1">★ — Muy malo</option>
+                        <option value="2">★★ — Malo</option>
+                        <option value="3">★★★ — Regular</option>
+                        <option value="4">★★★★ — Bueno</option>
+                        <option value="5">★★★★★ — Excelente</option>
+                    </select>
+                    <span th:if="${#fields.hasErrors('puntuacion')}" th:errors="*{puntuacion}" class="field-error"></span>
+                </div>
+                <div class="form-group">
+                    <label>Tu opinión</label>
+                    <textarea th:field="*{comentario}" placeholder="Contá tu experiencia con este profesor..."></textarea>
+                    <span th:if="${#fields.hasErrors('comentario')}" th:errors="*{comentario}" class="field-error"></span>
+                </div>
+                <button type="submit" class="btn btn-success">Publicar review</button>
+            </form>
         </div>
     </div>
 </body>
