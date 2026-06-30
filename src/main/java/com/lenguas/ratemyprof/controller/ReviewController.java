@@ -1,8 +1,9 @@
 package com.lenguas.ratemyprof.controller;
 
+import com.lenguas.ratemyprof.dto.CatedraView;
 import com.lenguas.ratemyprof.dto.ReviewForm;
+import com.lenguas.ratemyprof.dto.ReviewView;
 import com.lenguas.ratemyprof.model.Catedra;
-import com.lenguas.ratemyprof.model.Review;
 import com.lenguas.ratemyprof.model.Usuario;
 import com.lenguas.ratemyprof.service.CatedraService;
 import com.lenguas.ratemyprof.service.ReviewService;
@@ -33,10 +34,11 @@ public class ReviewController {
      */
     @GetMapping("/catedra/{id}")
     public String verReviews(@PathVariable Long id, Model model) {
-        Catedra catedra = catedraService.findById(id);
-        List<Review> reviews = reviewService.findByCatedra(id);
+        CatedraView catedra = catedraService.findViewById(id);
+        List<ReviewView> reviews = reviewService.findByCatedra(id);
         model.addAttribute("catedra", catedra);
         model.addAttribute("reviews", reviews);
+        model.addAttribute("desglose", catedraService.desgloseRating(id));
         return "reviews";
     }
 

@@ -34,7 +34,7 @@ public class MateriaController {
     public String verCatedrasPorMateria(@PathVariable Long id, Model model) {
         List<CatedraConRating> catedras = catedraService.findByMateriaOrdenadoPorRating(id);
         model.addAttribute("catedras", catedras);
-        model.addAttribute("materia", materiaRepository.findById(id).orElseThrow());
+        model.addAttribute("materiaNombre", materiaRepository.findById(id).orElseThrow().getNombre());
         return "catedras-por-materia";
     }
 }

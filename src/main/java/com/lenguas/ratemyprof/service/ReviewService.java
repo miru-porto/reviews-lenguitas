@@ -1,5 +1,6 @@
 package com.lenguas.ratemyprof.service;
 
+import com.lenguas.ratemyprof.dto.ReviewView;
 import com.lenguas.ratemyprof.model.Catedra;
 import com.lenguas.ratemyprof.model.Review;
 import com.lenguas.ratemyprof.model.Usuario;
@@ -9,17 +10,27 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class ReviewService {
 
+    private static final DateTimeFormatter FORMATO_FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
     private final ReviewRepository reviewRepository;
     private final CatedraRepository catedraRepository;
 
-    public List<Review> findByCatedra(Long catedraId) {
-        return reviewRepository.findByCatedraIdOrderByFechaCreacionDesc(catedraId);
+    public List<ReviewView> findByCatedra(Long catedraId) {
+        return reviewRepository.findByCatedraIdOrderByFechaCreacionDesc(catedraId).stream()
+                .map(r -> new ReviewView(
+                        r.getUsuario().getNombre(),
+                        r.getPuntuacion(),
+                        r.getComentario(),
+                        r.getFechaCreacion().format(FORMATO_FECHA)
+                ))
+                .toList();
     }
 
     public Review crear(Long catedraId, Usuario usuario, Integer puntuacion, String comentario) {

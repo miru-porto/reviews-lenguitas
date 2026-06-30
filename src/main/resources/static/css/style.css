@@ -118,3 +118,11 @@ nav .brand { font-size: 1.2rem; font-weight: bold; }
     color: #999;
     font-size: 0.9rem;
 }
+
+/* ===== Desglose de rating ===== */
+.desglose { display: flex; flex-direction: column; gap: 0.35rem; margin-top: 1rem; }
+.desglose-fila { display: flex; align-items: center; gap: 0.5rem; }
+.desglose-label { width: 3rem; color: #666; font-size: 0.9rem; }
+.desglose-track { flex: 1; height: 0.8rem; background: #eee; border-radius: 4px; overflow: hidden; }
+.desglose-fill { height: 100%; background: #f39c12; }
+.desglose-cant { width: 2rem; text-align: right; color: #999; font-size: 0.9rem; }

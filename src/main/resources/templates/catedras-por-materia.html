@@ -2,7 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
-    <title th:text="${materia.nombre} + ' - Rate My Prof'">Materia</title>
+    <title th:text="${materiaNombre} + ' - Rate My Prof'">Materia</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
@@ -19,7 +19,7 @@
 
     <div class="container">
         <a th:href="@{/materias}" style="color: #666; text-decoration: none;">← Volver a materias</a>
-        <h2 style="margin: 1rem 0;" th:text="${materia.nombre}">Fonética Inglesa</h2>
+        <h2 style="margin: 1rem 0;" th:text="${materiaNombre}">Fonética Inglesa</h2>
         <p style="margin-bottom: 1.5rem; color: #666;">Cátedras ordenadas por rating (de menor a mayor)</p>
 
         <div th:each="cat : ${catedras}" class="card">
