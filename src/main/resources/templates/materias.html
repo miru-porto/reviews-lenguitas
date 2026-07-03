@@ -23,6 +23,12 @@
         <h2 style="margin-bottom: 1rem;">Materias</h2>
         <p style="margin-bottom: 1.5rem; color: #666;">Elegí una materia para ver las cátedras y sus reviews.</p>
 
+        <form th:action="@{/buscar}" method="get" style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
+            <input type="text" name="q" placeholder="Buscar materia o profesor..."
+                   style="flex: 1; padding: 0.5rem;">
+            <button type="submit">Buscar</button>
+        </form>
+
         <div th:each="materia : ${materias}">
             <a th:href="@{/materias/{id}(id=${materia.id})}" class="materia-link"
                th:text="${materia.nombre}">Fonética Inglesa</a>

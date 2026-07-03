@@ -21,8 +21,8 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                // Páginas públicas: home, ver materias, ver reviews
-                .requestMatchers("/", "/materias", "/materias/**", "/catedra/**", "/registro", "/css/**").permitAll()
+                // Páginas públicas: home, ver materias, ver reviews, buscar
+                .requestMatchers("/", "/materias", "/materias/**", "/catedra/**", "/buscar", "/registro", "/css/**").permitAll()
                 // Crear review requiere estar logueado
                 .requestMatchers("/review/**").authenticated()
                 .anyRequest().authenticated()

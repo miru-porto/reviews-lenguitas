@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>Búsqueda - Rate My Prof</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav>
+        <div>
+            <a href="/" class="brand">Rate My Prof - Lenguas Vivas</a>
+            <a th:href="@{/materias}">Materias</a>
+        </div>
+        <div>
+            <span sec:authorize="isAuthenticated()" sec:authentication="name" style="color:white; margin-right:1rem;"></span>
+            <a sec:authorize="isAnonymous()" th:href="@{/login}">Iniciar sesión</a>
+            <a sec:authorize="isAnonymous()" th:href="@{/registro}">Registrarse</a>
+            <a sec:authorize="isAuthenticated()" th:href="@{/logout}">Cerrar sesión</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <a th:href="@{/materias}" style="color: #666; text-decoration: none;">← Volver a materias</a>
+        <h2 style="margin: 1rem 0;">Búsqueda</h2>
+
+        <form th:action="@{/buscar}" method="get" style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem;">
+            <input type="text" name="q" th:value="${resultados.consulta}"
+                   placeholder="Nombre de materia o profesor..."
+                   style="flex: 1; padding: 0.5rem;">
+            <button type="submit">Buscar</button>
+        </form>
+
+        <!-- Sin término: todavía no se buscó nada -->
+        <p th:if="${resultados.consulta.isEmpty()}" style="color: #999;">
+            Escribí el nombre de una materia o de un profesor.
+        </p>
+
+        <div th:if="${!resultados.consulta.isEmpty()}">
+            <p th:if="${resultados.vacio}" style="color: #999;">
+                No se encontraron resultados para
+                "<span th:text="${resultados.consulta}">fonetica</span>".
+            </p>
+
+            <div th:if="${!#lists.isEmpty(resultados.materias)}">
+                <h3 style="margin-bottom: 0.5rem;">Materias</h3>
+                <div th:each="materia : ${resultados.materias}">
+                    <a th:href="@{/materias/{id}(id=${materia.id})}" class="materia-link"
+                       th:text="${materia.nombre}">Fonética Inglesa</a>
+                </div>
+            </div>
+
+            <div th:if="${!#lists.isEmpty(resultados.catedras)}" style="margin-top: 1.5rem;">
+                <h3 style="margin-bottom: 0.5rem;">Profesores</h3>
+                <div th:each="cat : ${resultados.catedras}" class="card">
+                    <h3>
+                        <a th:href="@{/catedra/{id}(id=${cat.catedraId})}" style="text-decoration: none; color: #2c3e50;">
+                            <span th:text="${cat.apellidoProfesor + ', ' + cat.nombreProfesor}">García, María</span>
+                        </a>
+                    </h3>
+                    <span style="color: #666;" th:text="${cat.materiaNombre}">Fonética Inglesa</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

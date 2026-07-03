@@ -1,12 +1,16 @@
 # Rate My Prof - Lenguas Vivas Sofía E. B. de Spangenberg
 
-Sitio web de reviews de profesores del colegio Lenguas Vivas.
+Sitio web de reviews de profesores del colegio Lenguas Vivas. Los visitantes
+navegan materias → cátedras → reviews sin loguearse; los usuarios registrados
+pueden dejar una review por cátedra, editarla o borrarla.
 
-## Requisitos
+## Stack
 
-- Java 17+
-- Maven 3.8+
-- PostgreSQL 14+
+- Java 21 / Spring Boot 3.5.16 (Web, Data JPA, Security, Validation)
+- Thymeleaf para las vistas (server-side rendering)
+- PostgreSQL
+- Lombok
+- Maven
 
 ## Setup rápido
 
@@ -15,6 +19,8 @@ Sitio web de reviews de profesores del colegio Lenguas Vivas.
 ```sql
 CREATE DATABASE rate_my_prof;
 ```
+
+El esquema lo genera Hibernate automáticamente al arrancar (`ddl-auto=update`).
 
 ### 2. Configurar credenciales
 
@@ -36,10 +42,11 @@ mvn spring-boot:run
 
 La app arranca en `http://localhost:8080`
 
-### 4. Cargar datos de prueba (opcional)
+### 4. Datos de prueba
 
-Ejecutar `src/main/resources/data-seed.sql` en PostgreSQL para tener
-materias, profesores y cátedras de ejemplo.
+No hace falta cargar nada a mano: el `DataSeeder` (en `config/`) carga
+materias, profesores y cátedras de ejemplo la primera vez que la app arranca
+contra una base vacía. Es idempotente: si ya hay materias, no hace nada.
 
 ## Estructura del proyecto
 
@@ -47,14 +54,39 @@ materias, profesores y cátedras de ejemplo.
 src/main/java/com/lenguas/ratemyprof/
 ├── model/           # Entidades JPA (Usuario, Materia, Profesor, Catedra, Review)
 ├── repository/      # Interfaces JPA con queries custom
-├── service/         # Lógica de negocio (filtros, ratings, auth)
+├── service/         # Lógica de negocio (filtros, ratings, autorización de reviews)
 ├── controller/      # Endpoints y vistas Thymeleaf
-└── config/          # Spring Security
+├── dto/             # Entrada con validación (ReviewForm) y view models de salida
+│                    # (ReviewView, CatedraView, RatingBreakdown)
+└── config/          # Spring Security + DataSeeder
 ```
+
+Arquitectura MVC en capas: `Controller → Service → Repository → PostgreSQL`,
+con Thymeleaf renderizando los templates de `resources/templates/`. Los
+controllers no contienen lógica de negocio y las vistas consumen DTOs, no
+entidades JPA.
+
+## Rutas principales
+
+| Ruta | Acceso | Qué hace |
+|---|---|---|
+| `/` | público | Redirige a `/materias` |
+| `/materias` | público | Lista de materias |
+| `/materias/{id}` | público | Cátedras de una materia, ordenadas por rating |
+| `/catedra/{id}` | público | Reviews de una cátedra + desglose de estrellas |
+| `/buscar?q=...` | público | Búsqueda por nombre de materia o profesor |
+| `/review/nueva/{catedraId}` | logueado | Crear review (una por usuario por cátedra) |
+| `/review/{id}/editar` | logueado (solo el autor) | Editar review propia |
+| `/review/{id}/borrar` | logueado (solo el autor) | Borrar review propia |
+| `/login`, `/registro`, `/logout` | público | Autenticación |
+
+La autorización de editar/borrar se verifica **en el servidor** (en
+`ReviewService`), no solo ocultando botones en la vista.
 
 ## Flujo principal
 
 1. Usuario entra → ve lista de **materias**
 2. Elige una materia → ve las **cátedras** ordenadas por rating
-3. Entra a una cátedra → ve las **reviews**
+3. Entra a una cátedra → ve las **reviews** y el **desglose de estrellas**
 4. Se registra/loguea → puede **dejar su review** (1-5 estrellas + comentario)
+   y editarla o borrarla después
