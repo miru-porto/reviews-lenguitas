@@ -24,7 +24,7 @@ public class CatedraService {
     private final ReviewRepository reviewRepository;
 
     /**
-     * Devuelve las cátedras de una materia, ordenadas por rating ascendente.
+     * Devuelve las cátedras de una materia, ordenadas por rating descendente.
      * Este es el filtro principal que pidió la usuaria.
      */
     public List<CatedraConRating> findByMateriaOrdenadoPorRating(Long materiaId) {
@@ -43,7 +43,7 @@ public class CatedraService {
                             cantidad
                     );
                 })
-                .sorted(Comparator.comparingDouble(CatedraConRating::getPromedioRating))
+                .sorted(Comparator.comparingDouble(CatedraConRating::getPromedioRating).reversed())
                 .toList();
     }
 

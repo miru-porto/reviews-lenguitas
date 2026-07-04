@@ -20,7 +20,7 @@
     <div class="container">
         <a th:href="@{/materias}" style="color: #666; text-decoration: none;">← Volver a materias</a>
         <h2 style="margin: 1rem 0;" th:text="${materiaNombre}">Fonética Inglesa</h2>
-        <p style="margin-bottom: 1.5rem; color: #666;">Cátedras ordenadas por rating (de menor a mayor)</p>
+        <p style="margin-bottom: 1.5rem; color: #666;">Cátedras ordenadas por rating (de mayor a menor)</p>
 
         <div th:each="cat : ${catedras}" class="card">
             <div style="display: flex; justify-content: space-between; align-items: center;">

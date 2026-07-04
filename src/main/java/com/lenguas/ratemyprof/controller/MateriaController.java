@@ -28,7 +28,7 @@ public class MateriaController {
     }
 
     /**
-     * Filtro por materia: muestra las cátedras ordenadas por rating ascendente.
+     * Filtro por materia: muestra las cátedras ordenadas por rating descendente.
      */
     @GetMapping("/materias/{id}")
     public String verCatedrasPorMateria(@PathVariable Long id, Model model) {

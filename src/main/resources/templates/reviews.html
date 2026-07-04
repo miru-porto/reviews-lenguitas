@@ -66,7 +66,17 @@
             </div>
         </div>
 
-        <h3 style="margin-bottom: 1rem;">Reviews</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3>Reviews</h3>
+            <div th:if="${!#lists.isEmpty(reviews)}" style="font-size: 0.9rem; color: #666;">
+                Ordenar por:
+                <a th:href="@{/catedra/{id}(id=${catedra.catedraId})}"
+                   th:style="${orden != 'utiles'} ? 'font-weight: bold;'">más recientes</a>
+                ·
+                <a th:href="@{/catedra/{id}(id=${catedra.catedraId}, orden='utiles')}"
+                   th:style="${orden == 'utiles'} ? 'font-weight: bold;'">más útiles</a>
+            </div>
+        </div>
 
         <div th:each="review : ${reviews}" class="card">
             <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
@@ -75,6 +85,16 @@
             </div>
             <p th:text="${review.comentario}">Muy buen profesor...</p>
             <small style="color: #999;" th:text="${review.fecha}">01/01/2025</small>
+            <div style="margin-top: 0.8rem; display: flex; gap: 0.8rem; align-items: center;">
+                <span style="color: #666; font-size: 0.9rem;"
+                      th:text="${review.votosUtil} + ' persona(s) encontraron esto útil'">2 persona(s) encontraron esto útil</span>
+                <form sec:authorize="isAuthenticated()" th:if="${!review.esMia}"
+                      th:action="@{/review/{id}/util(id=${review.id})}" method="post">
+                    <input type="hidden" name="orden" th:value="${orden}">
+                    <button type="submit" class="btn btn-small"
+                            th:text="${review.laVoteUtil} ? 'Quitar mi voto' : '👍 Útil'">👍 Útil</button>
+                </form>
+            </div>
             <div th:if="${review.esMia}" style="margin-top: 0.8rem; display: flex; gap: 0.5rem; align-items: center;">
                 <a th:href="@{/review/{id}/editar(id=${review.id})}" class="btn btn-small">Editar</a>
                 <form th:action="@{/review/{id}/borrar(id=${review.id})}" method="post"

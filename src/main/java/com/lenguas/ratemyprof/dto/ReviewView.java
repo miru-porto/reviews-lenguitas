@@ -17,4 +17,8 @@ public class ReviewView {
     private String fecha;
     /** true si la review pertenece al usuario logueado (para mostrarle editar/borrar). */
     private boolean esMia;
+    /** cantidad de usuarios que marcaron esta review como útil. */
+    private long votosUtil;
+    /** true si el usuario logueado ya la votó como útil (para togglear el botón). */
+    private boolean laVoteUtil;
 }

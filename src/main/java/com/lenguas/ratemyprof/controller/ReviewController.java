@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -32,15 +33,20 @@ public class ReviewController {
 
     /**
      * Ver todas las reviews de una cátedra (público).
+     * orden: "fecha" (default, más recientes primero) o "utiles" (más votadas).
      */
     @GetMapping("/catedra/{id}")
-    public String verReviews(@PathVariable Long id, Authentication auth, Model model) {
+    public String verReviews(@PathVariable Long id,
+                             @RequestParam(defaultValue = "fecha") String orden,
+                             Authentication auth,
+                             Model model) {
         String emailActual = (auth != null) ? auth.getName() : null;
         CatedraView catedra = catedraService.findViewById(id);
-        List<ReviewView> reviews = reviewService.findByCatedra(id, emailActual);
+        List<ReviewView> reviews = reviewService.findByCatedra(id, emailActual, orden);
         model.addAttribute("catedra", catedra);
         model.addAttribute("reviews", reviews);
         model.addAttribute("desglose", catedraService.desgloseRating(id));
+        model.addAttribute("orden", orden);
         return "reviews";
     }
 
@@ -116,6 +122,19 @@ public class ReviewController {
         }
         Long catedraId = reviewService.editar(id, usuario, form.getPuntuacion(), form.getComentario());
         return "redirect:/catedra/" + catedraId + "?editado";
+    }
+
+    /**
+     * Marcar/desmarcar una review como útil (toggle). El "orden" viene en un
+     * hidden del form para volver a la página con el mismo ordenamiento.
+     */
+    @PostMapping("/review/{id}/util")
+    public String votarUtil(@PathVariable Long id,
+                            @RequestParam(defaultValue = "fecha") String orden,
+                            Authentication auth) {
+        Usuario usuario = usuarioService.findByEmail(auth.getName());
+        Long catedraId = reviewService.votarUtil(id, usuario);
+        return "redirect:/catedra/" + catedraId + "?orden=" + orden;
     }
 
     /**

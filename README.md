@@ -73,10 +73,11 @@ entidades JPA.
 | `/` | público | Redirige a `/materias` |
 | `/materias` | público | Lista de materias |
 | `/materias/{id}` | público | Cátedras de una materia, ordenadas por rating |
-| `/catedra/{id}` | público | Reviews de una cátedra + desglose de estrellas |
+| `/catedra/{id}` | público | Reviews de una cátedra + desglose de estrellas (orden por fecha o por votos útiles con `?orden=utiles`) |
 | `/buscar?q=...` | público | Búsqueda por nombre de materia o profesor |
 | `/review/nueva/{catedraId}` | logueado | Crear review (una por usuario por cátedra) |
 | `/review/{id}/editar` | logueado (solo el autor) | Editar review propia |
+| `/review/{id}/util` | logueado (no el autor) | Marcar/desmarcar una review como útil |
 | `/review/{id}/borrar` | logueado (solo el autor) | Borrar review propia |
 | `/login`, `/registro`, `/logout` | público | Autenticación |
 
@@ -90,3 +91,5 @@ La autorización de editar/borrar se verifica **en el servidor** (en
 3. Entra a una cátedra → ve las **reviews** y el **desglose de estrellas**
 4. Se registra/loguea → puede **dejar su review** (1-5 estrellas + comentario)
    y editarla o borrarla después
+5. También puede marcar reviews de otros como **útiles**; la lista se puede
+   ordenar por más recientes o por más útiles
