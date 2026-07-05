@@ -1,6 +1,7 @@
 package com.lenguas.ratemyprof.repository;
 
 import com.lenguas.ratemyprof.model.Catedra;
+import com.lenguas.ratemyprof.model.CatedraConRating;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -8,8 +9,25 @@ import java.util.List;
 
 public interface CatedraRepository extends JpaRepository<Catedra, Long> {
 
-    @Query("SELECT c FROM Catedra c JOIN FETCH c.profesor WHERE c.materia.id = :materiaId")
-    List<Catedra> findByMateriaId(@Param("materiaId") Long materiaId);
+    /**
+     * Cátedras de una materia con su rating, en UNA sola query: el LEFT JOIN
+     * mantiene las cátedras sin reviews (promedio 0), y el GROUP BY calcula
+     * promedio y cantidad por cátedra. El "new ..." (constructor expression)
+     * hace que JPA instancie el DTO directamente desde el SELECT.
+     */
+    @Query("""
+            SELECT new com.lenguas.ratemyprof.model.CatedraConRating(
+                c.id, p.nombre, p.apellido, m.nombre,
+                COALESCE(AVG(r.puntuacion), 0.0), COUNT(r))
+            FROM Catedra c
+            JOIN c.profesor p
+            JOIN c.materia m
+            LEFT JOIN c.reviews r
+            WHERE m.id = :materiaId
+            GROUP BY c.id, p.nombre, p.apellido, m.nombre
+            ORDER BY COALESCE(AVG(r.puntuacion), 0.0) DESC
+            """)
+    List<CatedraConRating> findByMateriaConRating(@Param("materiaId") Long materiaId);
 
     /**
      * Cátedras cuyo profesor coincide (parcial, sin mayúsculas) por nombre o

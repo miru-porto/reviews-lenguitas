@@ -11,7 +11,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     List<Review> findByCatedraIdOrderByFechaCreacionDesc(Long catedraId);
 
     @Query("SELECT AVG(r.puntuacion) FROM Review r WHERE r.catedra.id = :catedraId")
-    Double promedioByCredatraId(@Param("catedraId") Long catedraId);
+    Double promedioByCatedraId(@Param("catedraId") Long catedraId);
 
     /**
      * Cuenta cuántas reviews hay por cada puntuación (1..5) en una cátedra.

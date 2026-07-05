@@ -3,6 +3,7 @@ package com.lenguas.ratemyprof.service;
 import com.lenguas.ratemyprof.dto.CatedraView;
 import com.lenguas.ratemyprof.dto.NivelRating;
 import com.lenguas.ratemyprof.dto.RatingBreakdown;
+import com.lenguas.ratemyprof.exception.NotFoundException;
 import com.lenguas.ratemyprof.model.Catedra;
 import com.lenguas.ratemyprof.model.CatedraConRating;
 import com.lenguas.ratemyprof.repository.CatedraRepository;
@@ -11,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,31 +25,15 @@ public class CatedraService {
 
     /**
      * Devuelve las cátedras de una materia, ordenadas por rating descendente.
-     * Este es el filtro principal que pidió la usuaria.
+     * El cálculo (promedio + cantidad) y el orden viven en la query.
      */
     public List<CatedraConRating> findByMateriaOrdenadoPorRating(Long materiaId) {
-        List<Catedra> catedras = catedraRepository.findByMateriaId(materiaId);
-
-        return catedras.stream()
-                .map(c -> {
-                    Double promedio = reviewRepository.promedioByCredatraId(c.getId());
-                    long cantidad = reviewRepository.findByCatedraIdOrderByFechaCreacionDesc(c.getId()).size();
-                    return new CatedraConRating(
-                            c.getId(),
-                            c.getProfesor().getNombre(),
-                            c.getProfesor().getApellido(),
-                            c.getMateria().getNombre(),
-                            promedio != null ? promedio : 0.0,
-                            cantidad
-                    );
-                })
-                .sorted(Comparator.comparingDouble(CatedraConRating::getPromedioRating).reversed())
-                .toList();
+        return catedraRepository.findByMateriaConRating(materiaId);
     }
 
     public Catedra findById(Long id) {
         return catedraRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Cátedra no encontrada"));
+                .orElseThrow(() -> new NotFoundException("Cátedra no encontrada"));
     }
 
     /**
@@ -86,7 +70,7 @@ public class CatedraService {
             niveles.add(new NivelRating(estrellas, cantidad, porcentaje));
         }
 
-        Double promedio = reviewRepository.promedioByCredatraId(catedraId);
+        Double promedio = reviewRepository.promedioByCatedraId(catedraId);
         return new RatingBreakdown(promedio != null ? promedio : 0.0, total, niveles);
     }
 }

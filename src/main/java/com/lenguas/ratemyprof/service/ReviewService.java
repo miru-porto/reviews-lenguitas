@@ -1,6 +1,7 @@
 package com.lenguas.ratemyprof.service;
 
 import com.lenguas.ratemyprof.dto.ReviewView;
+import com.lenguas.ratemyprof.exception.NotFoundException;
 import com.lenguas.ratemyprof.model.Catedra;
 import com.lenguas.ratemyprof.model.Review;
 import com.lenguas.ratemyprof.model.Usuario;
@@ -75,7 +76,7 @@ public class ReviewService {
      */
     public Review obtenerPropia(Long reviewId, Usuario usuario) {
         Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new RuntimeException("Review no encontrada"));
+                .orElseThrow(() -> new NotFoundException("Review no encontrada"));
         if (!review.getUsuario().getId().equals(usuario.getId())) {
             throw new RuntimeException("No tenés permiso para modificar esta review");
         }
@@ -110,7 +111,7 @@ public class ReviewService {
     @Transactional
     public Long votarUtil(Long reviewId, Usuario usuario) {
         Review review = reviewRepository.findById(reviewId)
-                .orElseThrow(() -> new RuntimeException("Review no encontrada"));
+                .orElseThrow(() -> new NotFoundException("Review no encontrada"));
         if (review.getUsuario().getId().equals(usuario.getId())) {
             throw new RuntimeException("No podés votar tu propia review");
         }
@@ -134,7 +135,7 @@ public class ReviewService {
         }
 
         Catedra catedra = catedraRepository.findById(catedraId)
-                .orElseThrow(() -> new RuntimeException("Cátedra no encontrada"));
+                .orElseThrow(() -> new NotFoundException("Cátedra no encontrada"));
 
         Review review = new Review();
         review.setUsuario(usuario);

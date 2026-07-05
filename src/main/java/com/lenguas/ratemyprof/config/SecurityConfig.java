@@ -21,8 +21,10 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(auth -> auth
-                // Páginas públicas: home, ver materias, ver reviews, buscar
-                .requestMatchers("/", "/materias", "/materias/**", "/catedra/**", "/buscar", "/registro", "/css/**").permitAll()
+                // Páginas públicas: home, ver materias, ver reviews, buscar.
+                // "/error" es el dispatch interno de Spring cuando salta una excepción:
+                // si Security lo bloquea, un 404 termina redirigiendo al login.
+                .requestMatchers("/", "/materias", "/materias/**", "/catedra/**", "/buscar", "/registro", "/css/**", "/error").permitAll()
                 // Crear review requiere estar logueado
                 .requestMatchers("/review/**").authenticated()
                 .anyRequest().authenticated()

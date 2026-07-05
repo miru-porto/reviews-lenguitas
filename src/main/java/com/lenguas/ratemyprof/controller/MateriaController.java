@@ -1,5 +1,6 @@
 package com.lenguas.ratemyprof.controller;
 
+import com.lenguas.ratemyprof.exception.NotFoundException;
 import com.lenguas.ratemyprof.model.CatedraConRating;
 import com.lenguas.ratemyprof.repository.MateriaRepository;
 import com.lenguas.ratemyprof.service.CatedraService;
@@ -34,7 +35,9 @@ public class MateriaController {
     public String verCatedrasPorMateria(@PathVariable Long id, Model model) {
         List<CatedraConRating> catedras = catedraService.findByMateriaOrdenadoPorRating(id);
         model.addAttribute("catedras", catedras);
-        model.addAttribute("materiaNombre", materiaRepository.findById(id).orElseThrow().getNombre());
+        model.addAttribute("materiaNombre", materiaRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Materia no encontrada"))
+                .getNombre());
         return "catedras-por-materia";
     }
 }
