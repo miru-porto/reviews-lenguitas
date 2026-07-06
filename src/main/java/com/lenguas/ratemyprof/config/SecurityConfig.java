@@ -2,6 +2,7 @@ package com.lenguas.ratemyprof.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -25,6 +26,9 @@ public class SecurityConfig {
                 // "/error" es el dispatch interno de Spring cuando salta una excepción:
                 // si Security lo bloquea, un 404 termina redirigiendo al login.
                 .requestMatchers("/", "/materias", "/materias/**", "/catedra/**", "/buscar", "/registro", "/css/**", "/error").permitAll()
+                // API de lectura pública: solo los GET; los POST/PUT/DELETE de la
+                // fase 2 van a requerir autenticación.
+                .requestMatchers(HttpMethod.GET, "/api/**").permitAll()
                 // Crear review requiere estar logueado
                 .requestMatchers("/review/**").authenticated()
                 .anyRequest().authenticated()
