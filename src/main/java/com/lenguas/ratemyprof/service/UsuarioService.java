@@ -1,5 +1,6 @@
 package com.lenguas.ratemyprof.service;
 
+import com.lenguas.ratemyprof.exception.ConflictException;
 import com.lenguas.ratemyprof.model.Usuario;
 import com.lenguas.ratemyprof.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +34,7 @@ public class UsuarioService implements UserDetailsService {
 
     public Usuario registrar(String nombre, String email, String password) {
         if (usuarioRepository.existsByEmail(email)) {
-            throw new RuntimeException("Ya existe una cuenta con ese email");
+            throw new ConflictException("Ya existe una cuenta con ese email");
         }
 
         Usuario usuario = new Usuario();

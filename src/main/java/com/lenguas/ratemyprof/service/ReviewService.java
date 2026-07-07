@@ -1,6 +1,8 @@
 package com.lenguas.ratemyprof.service;
 
 import com.lenguas.ratemyprof.dto.ReviewView;
+import com.lenguas.ratemyprof.exception.ConflictException;
+import com.lenguas.ratemyprof.exception.ForbiddenException;
 import com.lenguas.ratemyprof.exception.NotFoundException;
 import com.lenguas.ratemyprof.model.Catedra;
 import com.lenguas.ratemyprof.model.Review;
@@ -78,7 +80,7 @@ public class ReviewService {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new NotFoundException("Review no encontrada"));
         if (!review.getUsuario().getId().equals(usuario.getId())) {
-            throw new RuntimeException("No tenés permiso para modificar esta review");
+            throw new ForbiddenException("No tenés permiso para modificar esta review");
         }
         return review;
     }
@@ -113,7 +115,7 @@ public class ReviewService {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new NotFoundException("Review no encontrada"));
         if (review.getUsuario().getId().equals(usuario.getId())) {
-            throw new RuntimeException("No podés votar tu propia review");
+            throw new ForbiddenException("No podés votar tu propia review");
         }
 
         votoUtilRepository.findByUsuarioIdAndReviewId(usuario.getId(), reviewId)
@@ -131,7 +133,7 @@ public class ReviewService {
     public Review crear(Long catedraId, Usuario usuario, Integer puntuacion, String comentario) {
         // Validar que el usuario no haya hecho review de esta cátedra ya
         if (reviewRepository.existsByUsuarioIdAndCatedraId(usuario.getId(), catedraId)) {
-            throw new RuntimeException("Ya dejaste una review para esta cátedra");
+            throw new ConflictException("Ya dejaste una review para esta cátedra");
         }
 
         Catedra catedra = catedraRepository.findById(catedraId)
