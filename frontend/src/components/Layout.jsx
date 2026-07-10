@@ -5,10 +5,12 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import InputBase from '@mui/material/InputBase';
 import { alpha } from '@mui/material/styles';
 import SearchIcon from '@mui/icons-material/Search';
 import SchoolIcon from '@mui/icons-material/School';
+import { useAuth } from '../auth/AuthContext';
 
 /**
  * Marco común de todas las pantallas: barra superior con el título (link al
@@ -17,7 +19,13 @@ import SchoolIcon from '@mui/icons-material/School';
  */
 export default function Layout() {
   const navigate = useNavigate();
+  const { usuario, cargando, logout } = useAuth();
   const [texto, setTexto] = useState('');
+
+  async function onLogout() {
+    await logout();
+    navigate('/');
+  }
 
   // Al enviar el buscador vamos a /buscar?q=... — la pantalla de búsqueda lee
   // ese parámetro de la URL y pide los resultados.
@@ -63,6 +71,24 @@ export default function Layout() {
               sx={{ color: 'inherit', ml: 1, width: { xs: 120, sm: 220 } }}
             />
           </Box>
+
+          {/* Sesión: mientras carga (getMe inicial) no mostramos nada para no
+              parpadear "Ingresar" y cambiar a "Salir" un instante después. */}
+          {!cargando &&
+            (usuario ? (
+              <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
+                <Typography sx={{ mr: 1, display: { xs: 'none', sm: 'block' } }}>
+                  {usuario.nombre}
+                </Typography>
+                <Button color="inherit" onClick={onLogout}>
+                  Salir
+                </Button>
+              </Box>
+            ) : (
+              <Button color="inherit" component={RouterLink} to="/login" sx={{ ml: 2 }}>
+                Ingresar
+              </Button>
+            ))}
         </Toolbar>
       </AppBar>
 
