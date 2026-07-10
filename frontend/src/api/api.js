@@ -36,6 +36,48 @@ async function get(path) {
     throw new ApiError('No se pudo conectar con el servidor', 0);
   }
 
+  return manejarRespuesta(respuesta);
+}
+
+/**
+ * Lee una cookie por nombre desde document.cookie. La usamos para el token CSRF:
+ * el backend lo deja en la cookie XSRF-TOKEN (legible por JS) y espera que se lo
+ * devolvamos en un header en cada request que modifica datos.
+ */
+function leerCookie(nombre) {
+  const match = document.cookie.match('(^|;)\\s*' + nombre + '\\s*=\\s*([^;]+)');
+  return match ? decodeURIComponent(match.pop()) : null;
+}
+
+/**
+ * POST/PUT/DELETE con cuerpo JSON. A diferencia de get, manda el token CSRF en
+ * el header X-XSRF-TOKEN (Spring lo exige para métodos que modifican). El token
+ * sale de la cookie que el backend ya escribió en algún GET previo.
+ */
+async function enviar(metodo, path, cuerpo) {
+  let respuesta;
+  try {
+    respuesta = await fetch(`${BASE_URL}${path}`, {
+      method: metodo,
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-XSRF-TOKEN': leerCookie('XSRF-TOKEN') || '',
+      },
+      body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
+    });
+  } catch {
+    throw new ApiError('No se pudo conectar con el servidor', 0);
+  }
+
+  return manejarRespuesta(respuesta);
+}
+
+/**
+ * Traduce una respuesta HTTP a datos o a un ApiError. Si el backend mandó un
+ * cuerpo {"error": "..."} lo usamos como mensaje; 204 (sin cuerpo) devuelve null.
+ */
+async function manejarRespuesta(respuesta) {
   if (!respuesta.ok) {
     let mensaje = `Error ${respuesta.status}`;
     try {
@@ -49,6 +91,10 @@ async function get(path) {
     throw new ApiError(mensaje, respuesta.status);
   }
 
+  // 204 No Content (ej: logout) no trae cuerpo que parsear.
+  if (respuesta.status === 204) {
+    return null;
+  }
   return respuesta.json();
 }
 
@@ -77,4 +123,30 @@ export function getReviewsDeCatedra(catedraId, orden = 'fecha') {
 /** GET /api/buscar?q=... → ResultadosBusqueda { consulta, materias, catedras } */
 export function buscar(q) {
   return get(`/api/buscar?q=${encodeURIComponent(q)}`);
+}
+
+// ---- Autenticación (Fase 4) ----
+
+/**
+ * POST /api/auth/login → UsuarioView si el DNI existe. Si no existe, el backend
+ * responde 404: enviar lanza ApiError con status 404, y la pantalla de login lo
+ * interpreta como "hay que registrarse".
+ */
+export function login(dni) {
+  return enviar('POST', '/api/auth/login', { dni });
+}
+
+/** POST /api/auth/registro → 201 UsuarioView; deja la sesión iniciada. */
+export function registro(dni, nombre) {
+  return enviar('POST', '/api/auth/registro', { dni, nombre });
+}
+
+/** POST /api/auth/logout → 204 (sin cuerpo). */
+export function logout() {
+  return enviar('POST', '/api/auth/logout');
+}
+
+/** GET /api/auth/me → UsuarioView del usuario logueado, o 401 si no hay sesión. */
+export function getMe() {
+  return get('/api/auth/me');
 }
