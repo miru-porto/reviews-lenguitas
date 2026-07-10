@@ -24,13 +24,15 @@ public class AuthController {
         return "registro";
     }
 
+    // Alta desde las páginas Thymeleaf. El modelo de auth pasó a ser por DNI
+    // (ver AuthApiController); estas páginas se retiran en la Fase 6, así que
+    // acá solo mantenemos la compilación contra la firma nueva del service.
     @PostMapping("/registro")
-    public String registrar(@RequestParam String nombre,
-                            @RequestParam String email,
-                            @RequestParam String password,
+    public String registrar(@RequestParam String dni,
+                            @RequestParam String nombre,
                             Model model) {
         try {
-            usuarioService.registrar(nombre, email, password);
+            usuarioService.registrar(dni, nombre);
             return "redirect:/login?registrado";
         } catch (RuntimeException e) {
             model.addAttribute("error", e.getMessage());

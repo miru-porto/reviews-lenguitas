@@ -21,14 +21,16 @@ public class Usuario {
     @Column(nullable = false)
     private String nombre;
 
-    @Email
+    // El DNI es la identidad del usuario: con él se loguea (no hay contraseña).
     @NotBlank
     @Column(nullable = false, unique = true)
-    private String email;
+    private String dni;
 
-    @NotBlank
-    @Column(nullable = false)
-    private String password;
+    // Opcional: no se pide en el alta por DNI, pero queda la columna por si más
+    // adelante se quiere contactar al usuario. Nullable; único si está presente.
+    @Email
+    @Column(unique = true)
+    private String email;
 
     @Column(name = "fecha_registro")
     private LocalDateTime fechaRegistro = LocalDateTime.now();

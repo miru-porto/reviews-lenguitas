@@ -40,9 +40,9 @@ public class ReviewController {
                              @RequestParam(defaultValue = "fecha") String orden,
                              Authentication auth,
                              Model model) {
-        String emailActual = (auth != null) ? auth.getName() : null;
+        String dniActual = (auth != null) ? auth.getName() : null;
         CatedraView catedra = catedraService.findViewById(id);
-        List<ReviewView> reviews = reviewService.findByCatedra(id, emailActual, orden);
+        List<ReviewView> reviews = reviewService.findByCatedra(id, dniActual, orden);
         model.addAttribute("catedra", catedra);
         model.addAttribute("reviews", reviews);
         model.addAttribute("desglose", catedraService.desgloseRating(id));
@@ -75,7 +75,7 @@ public class ReviewController {
             return "nueva-review";
         }
         try {
-            Usuario usuario = usuarioService.findByEmail(auth.getName());
+            Usuario usuario = usuarioService.findByDni(auth.getName());
             reviewService.crear(catedraId, usuario, form.getPuntuacion(), form.getComentario());
             return "redirect:/catedra/" + catedraId + "?exito";
         } catch (RuntimeException e) {
@@ -91,7 +91,7 @@ public class ReviewController {
      */
     @GetMapping("/review/{id}/editar")
     public String formularioEditar(@PathVariable Long id, Authentication auth, Model model) {
-        Usuario usuario = usuarioService.findByEmail(auth.getName());
+        Usuario usuario = usuarioService.findByDni(auth.getName());
         Review review = reviewService.obtenerPropia(id, usuario);
 
         ReviewForm form = new ReviewForm();
@@ -113,7 +113,7 @@ public class ReviewController {
                                BindingResult result,
                                Authentication auth,
                                Model model) {
-        Usuario usuario = usuarioService.findByEmail(auth.getName());
+        Usuario usuario = usuarioService.findByDni(auth.getName());
         if (result.hasErrors()) {
             Review review = reviewService.obtenerPropia(id, usuario);
             model.addAttribute("catedra", catedraService.findViewById(review.getCatedra().getId()));
@@ -132,7 +132,7 @@ public class ReviewController {
     public String votarUtil(@PathVariable Long id,
                             @RequestParam(defaultValue = "fecha") String orden,
                             Authentication auth) {
-        Usuario usuario = usuarioService.findByEmail(auth.getName());
+        Usuario usuario = usuarioService.findByDni(auth.getName());
         Long catedraId = reviewService.votarUtil(id, usuario);
         return "redirect:/catedra/" + catedraId + "?orden=" + orden;
     }
@@ -142,7 +142,7 @@ public class ReviewController {
      */
     @PostMapping("/review/{id}/borrar")
     public String borrarReview(@PathVariable Long id, Authentication auth) {
-        Usuario usuario = usuarioService.findByEmail(auth.getName());
+        Usuario usuario = usuarioService.findByDni(auth.getName());
         Long catedraId = reviewService.eliminar(id, usuario);
         return "redirect:/catedra/" + catedraId + "?borrado";
     }

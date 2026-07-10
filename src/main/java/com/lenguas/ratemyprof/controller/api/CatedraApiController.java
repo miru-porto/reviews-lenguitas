@@ -44,7 +44,7 @@ public class CatedraApiController {
                                     @RequestParam(defaultValue = "fecha") String orden,
                                     Authentication auth) {
         catedraService.findViewById(id); // 404 si la cátedra no existe
-        String email = (auth != null) ? auth.getName() : null;
-        return reviewService.findByCatedra(id, email, orden);
+        String dni = (auth != null) ? auth.getName() : null;
+        return reviewService.findByCatedra(id, dni, orden);
     }
 }

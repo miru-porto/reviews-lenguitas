@@ -40,15 +40,15 @@ public class ReviewService {
      * Reviews de una cátedra como view models. Por defecto ordenadas por fecha
      * (más recientes primero); con orden="utiles", por cantidad de votos útiles.
      */
-    public List<ReviewView> findByCatedra(Long catedraId, String emailUsuarioActual, String orden) {
+    public List<ReviewView> findByCatedra(Long catedraId, String dniUsuarioActual, String orden) {
         // Votos por review en una sola query, para no hacer un COUNT por cada una.
         Map<Long, Long> votosPorReview = new HashMap<>();
         for (Object[] fila : votoUtilRepository.contarPorReviewDeCatedra(catedraId)) {
             votosPorReview.put((Long) fila[0], (Long) fila[1]);
         }
-        Set<Long> misVotos = emailUsuarioActual == null
+        Set<Long> misVotos = dniUsuarioActual == null
                 ? Set.of()
-                : Set.copyOf(votoUtilRepository.reviewIdsVotadasPor(emailUsuarioActual, catedraId));
+                : Set.copyOf(votoUtilRepository.reviewIdsVotadasPor(dniUsuarioActual, catedraId));
 
         List<ReviewView> reviews = reviewRepository.findByCatedraIdOrderByFechaCreacionDesc(catedraId).stream()
                 .map(r -> new ReviewView(
@@ -57,7 +57,7 @@ public class ReviewService {
                         r.getPuntuacion(),
                         r.getComentario(),
                         r.getFechaCreacion().format(FORMATO_FECHA),
-                        emailUsuarioActual != null && emailUsuarioActual.equals(r.getUsuario().getEmail()),
+                        dniUsuarioActual != null && dniUsuarioActual.equals(r.getUsuario().getDni()),
                         votosPorReview.getOrDefault(r.getId(), 0L),
                         misVotos.contains(r.getId())
                 ))

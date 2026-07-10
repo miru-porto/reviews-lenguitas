@@ -8,45 +8,52 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class UsuarioService implements UserDetailsService {
 
     private final UsuarioRepository usuarioRepository;
-    private final PasswordEncoder passwordEncoder;
 
     /**
-     * Spring Security usa este método para autenticar.
-     * El "username" en nuestro caso es el email.
+     * Spring Security usa este método para resolver un usuario por su "username".
+     * En nuestro caso el username es el DNI. No hay contraseña: la autenticación
+     * es solo por identidad (ver AuthApiController), así que el password del
+     * UserDetails queda vacío y nunca se compara.
      */
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        Usuario usuario = usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + email));
+    public UserDetails loadUserByUsername(String dni) throws UsernameNotFoundException {
+        Usuario usuario = usuarioRepository.findByDni(dni)
+                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + dni));
 
-        return new User(usuario.getEmail(), usuario.getPassword(), Collections.emptyList());
+        return new User(usuario.getDni(), "", Collections.emptyList());
     }
 
-    public Usuario registrar(String nombre, String email, String password) {
-        if (usuarioRepository.existsByEmail(email)) {
-            throw new ConflictException("Ya existe una cuenta con ese email");
+    /** Alta de un usuario nuevo. 409 si el DNI ya está registrado. */
+    public Usuario registrar(String dni, String nombre) {
+        if (usuarioRepository.existsByDni(dni)) {
+            throw new ConflictException("Ya existe un usuario con ese DNI");
         }
 
         Usuario usuario = new Usuario();
+        usuario.setDni(dni);
         usuario.setNombre(nombre);
-        usuario.setEmail(email);
-        usuario.setPassword(passwordEncoder.encode(password));
 
         return usuarioRepository.save(usuario);
     }
 
-    public Usuario findByEmail(String email) {
-        return usuarioRepository.findByEmail(email)
+    /** Busca por DNI sin fallar: lo usa el login para decidir alta vs ingreso. */
+    public Optional<Usuario> buscarPorDni(String dni) {
+        return usuarioRepository.findByDni(dni);
+    }
+
+    /** Igual que buscarPorDni pero exige que exista (usuario ya autenticado). */
+    public Usuario findByDni(String dni) {
+        return usuarioRepository.findByDni(dni)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
     }
 }

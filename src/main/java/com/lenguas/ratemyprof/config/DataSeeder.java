@@ -9,7 +9,6 @@ import com.lenguas.ratemyprof.repository.MateriaRepository;
 import com.lenguas.ratemyprof.repository.ProfesorRepository;
 import com.lenguas.ratemyprof.repository.UsuarioRepository;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -26,18 +25,15 @@ public class DataSeeder implements CommandLineRunner {
     private final ProfesorRepository profesorRepository;
     private final CatedraRepository catedraRepository;
     private final UsuarioRepository usuarioRepository;
-    private final PasswordEncoder passwordEncoder;
 
     public DataSeeder(MateriaRepository materiaRepository,
                       ProfesorRepository profesorRepository,
                       CatedraRepository catedraRepository,
-                      UsuarioRepository usuarioRepository,
-                      PasswordEncoder passwordEncoder) {
+                      UsuarioRepository usuarioRepository) {
         this.materiaRepository = materiaRepository;
         this.profesorRepository = profesorRepository;
         this.catedraRepository = catedraRepository;
         this.usuarioRepository = usuarioRepository;
-        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -97,11 +93,10 @@ public class DataSeeder implements CommandLineRunner {
         }
         catedraRepository.saveAll(catedras);
 
-        // ===== Usuario de prueba (password: "password123") =====
+        // ===== Usuario de prueba (login con DNI "12345678") =====
         Usuario usuario = new Usuario();
         usuario.setNombre("Estudiante Test");
-        usuario.setEmail("test@test.com");
-        usuario.setPassword(passwordEncoder.encode("password123"));
+        usuario.setDni("12345678");
         usuarioRepository.save(usuario);
     }
 }
