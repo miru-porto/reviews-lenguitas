@@ -4,7 +4,6 @@ import com.lenguas.ratemyprof.dto.ApiError;
 import com.lenguas.ratemyprof.dto.ValidationError;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -34,7 +33,7 @@ public class ApiExceptionHandler {
                 .body(new ApiError(e.getMessage()));
     }
 
-    /** Conflicto con el estado actual: review duplicada, email ya registrado. */
+    /** Conflicto con el estado actual: review duplicada, DNI ya registrado. */
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<ApiError> conflict(ConflictException e) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
@@ -54,17 +53,6 @@ public class ApiExceptionHandler {
         }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ValidationError("Datos inválidos", campos));
-    }
-
-    /**
-     * Credenciales incorrectas en /api/auth/login. El mensaje real de Spring
-     * ("Bad credentials") no viaja: devolvemos uno propio y genérico para no
-     * revelar si el email existe.
-     */
-    @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<ApiError> autenticacion(AuthenticationException e) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(new ApiError("Email o contraseña incorrectos"));
     }
 
     /**
