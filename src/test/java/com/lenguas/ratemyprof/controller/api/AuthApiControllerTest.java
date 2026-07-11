@@ -13,11 +13,11 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.mockito.ArgumentMatchers.any;
+import java.util.Optional;
+
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -26,8 +26,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * @WebMvcTest de la autenticación de la API. Verifica: login con credenciales
- * malas → 401, registro con datos inválidos → 400, y /me según haya o no sesión.
+ * @WebMvcTest de la autenticación de la API (login por DNI, sin contraseña).
+ * Verifica: login con un DNI no registrado → 404, registro con un DNI de formato
+ * inválido → 400, y /me según haya o no sesión. El principal es el DNI, así que
+ * el @WithMockUser usa un DNI como username.
  */
 @WebMvcTest(AuthApiController.class)
 @Import({SecurityConfig.class, ApiExceptionHandler.class})
@@ -38,40 +40,40 @@ class AuthApiControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    // La API chain define un AuthenticationManager (bean de SecurityConfig); lo
+    // mockeamos para no depender del cableado real en este slice, aunque el login
+    // por DNI ya no lo use.
     @MockBean
     private AuthenticationManager authenticationManager;
     @MockBean
     private UsuarioService usuarioService;
 
-    private static final String EMAIL = "ana@ejemplo.com";
+    private static final String DNI = "30111222";
 
     // ---------- login ----------
 
     @Test
-    void login_credencialesInvalidas_devuelve401() throws Exception {
-        when(authenticationManager.authenticate(any()))
-                .thenThrow(new BadCredentialsException("Bad credentials"));
+    void login_dniNoRegistrado_devuelve404() throws Exception {
+        when(usuarioService.buscarPorDni(DNI)).thenReturn(Optional.empty());
 
         LoginRequest req = new LoginRequest();
-        req.setEmail(EMAIL);
-        req.setPassword("incorrecta");
+        req.setDni(DNI);
 
         mockMvc.perform(post("/api/auth/login")
                         .with(csrf())
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.error").value("Email o contraseña incorrectos"));
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("DNI no registrado"));
     }
 
     // ---------- registro ----------
 
     @Test
-    void registro_emailInvalido_devuelve400() throws Exception {
+    void registro_dniInvalido_devuelve400() throws Exception {
         RegistroRequest req = new RegistroRequest();
+        req.setDni("no-es-un-dni");   // no matchea \d{7,8}
         req.setNombre("Ana");
-        req.setEmail("no-es-un-email");
-        req.setPassword("secreta123");
 
         mockMvc.perform(post("/api/auth/registro")
                         .with(csrf())
@@ -79,7 +81,7 @@ class AuthApiControllerTest {
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").value("Datos inválidos"))
-                .andExpect(jsonPath("$.campos.email").exists());
+                .andExpect(jsonPath("$.campos.dni").exists());
     }
 
     // ---------- me ----------
@@ -91,18 +93,18 @@ class AuthApiControllerTest {
     }
 
     @Test
-    @WithMockUser(username = EMAIL)
+    @WithMockUser(username = DNI)
     void me_conSesion_devuelveUsuario() throws Exception {
         Usuario ana = new Usuario();
         ana.setId(1L);
+        ana.setDni(DNI);
         ana.setNombre("Ana");
-        ana.setEmail(EMAIL);
-        when(usuarioService.findByEmail(EMAIL)).thenReturn(ana);
+        when(usuarioService.findByDni(DNI)).thenReturn(ana);
 
         mockMvc.perform(get("/api/auth/me"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.nombre").value("Ana"))
-                .andExpect(jsonPath("$.email").value(EMAIL));
+                .andExpect(jsonPath("$.dni").value(DNI))
+                .andExpect(jsonPath("$.nombre").value("Ana"));
     }
 }

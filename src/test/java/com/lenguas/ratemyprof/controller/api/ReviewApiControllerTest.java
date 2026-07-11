@@ -58,7 +58,7 @@ class ReviewApiControllerTest {
     @MockBean
     private AuthenticationManager authenticationManager;
 
-    private static final String EMAIL = "ana@ejemplo.com";
+    private static final String DNI = "30111222";
 
     private CrearReviewRequest crearRequest() {
         CrearReviewRequest req = new CrearReviewRequest();
@@ -82,7 +82,7 @@ class ReviewApiControllerTest {
     // ---------- 400 body inválido ----------
 
     @Test
-    @WithMockUser(username = EMAIL)
+    @WithMockUser(username = DNI)
     void post_bodyInvalido_devuelve400ConCampos() throws Exception {
         CrearReviewRequest req = crearRequest();
         req.setComentario("");   // @NotBlank
@@ -101,11 +101,11 @@ class ReviewApiControllerTest {
     // ---------- 201 feliz ----------
 
     @Test
-    @WithMockUser(username = EMAIL)
+    @WithMockUser(username = DNI)
     void post_feliz_devuelve201ConId() throws Exception {
         Usuario ana = new Usuario();
         ana.setId(1L);
-        ana.setEmail(EMAIL);
+        ana.setDni(DNI);
         Catedra catedra = new Catedra();
         catedra.setId(10L);
         Review creada = new Review();
@@ -113,7 +113,7 @@ class ReviewApiControllerTest {
         creada.setCatedra(catedra);
         creada.setUsuario(ana);
 
-        when(usuarioService.findByEmail(EMAIL)).thenReturn(ana);
+        when(usuarioService.findByDni(DNI)).thenReturn(ana);
         when(reviewService.crear(eq(10L), eq(ana), eq(5), any())).thenReturn(creada);
 
         mockMvc.perform(post("/api/reviews")
@@ -128,12 +128,12 @@ class ReviewApiControllerTest {
     // ---------- 403 review ajena ----------
 
     @Test
-    @WithMockUser(username = EMAIL)
+    @WithMockUser(username = DNI)
     void put_reviewAjena_devuelve403() throws Exception {
         Usuario ana = new Usuario();
         ana.setId(1L);
-        ana.setEmail(EMAIL);
-        when(usuarioService.findByEmail(EMAIL)).thenReturn(ana);
+        ana.setDni(DNI);
+        when(usuarioService.findByDni(DNI)).thenReturn(ana);
         when(reviewService.editar(anyLong(), any(), any(), any()))
                 .thenThrow(new ForbiddenException("No tenés permiso para modificar esta review"));
 
@@ -152,12 +152,12 @@ class ReviewApiControllerTest {
     // ---------- 204 borrar ----------
 
     @Test
-    @WithMockUser(username = EMAIL)
+    @WithMockUser(username = DNI)
     void delete_feliz_devuelve204() throws Exception {
         Usuario ana = new Usuario();
         ana.setId(1L);
-        ana.setEmail(EMAIL);
-        when(usuarioService.findByEmail(EMAIL)).thenReturn(ana);
+        ana.setDni(DNI);
+        when(usuarioService.findByDni(DNI)).thenReturn(ana);
         when(reviewService.eliminar(eq(5L), eq(ana))).thenReturn(10L);
 
         mockMvc.perform(delete("/api/reviews/5").with(csrf()))
