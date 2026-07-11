@@ -150,3 +150,34 @@ export function logout() {
 export function getMe() {
   return get('/api/auth/me');
 }
+
+// ---- Escritura de reviews (Fase 4c) ----
+
+/**
+ * POST /api/reviews → 201 { id, catedraId }. Requiere sesión (401 si no hay).
+ * 409 si el usuario ya dejó una review para esa cátedra; 400 si el body es inválido.
+ */
+export function crearReview(catedraId, puntuacion, comentario) {
+  return enviar('POST', '/api/reviews', { catedraId, puntuacion, comentario });
+}
+
+/**
+ * PUT /api/reviews/{id} → 204. Edita una review propia; el backend verifica el
+ * dueño (403 si es ajena, 404 si no existe, 400 si el body es inválido).
+ */
+export function editarReview(id, puntuacion, comentario) {
+  return enviar('PUT', `/api/reviews/${id}`, { puntuacion, comentario });
+}
+
+/** DELETE /api/reviews/{id} → 204. Borra una review propia (403 si es ajena). */
+export function borrarReview(id) {
+  return enviar('DELETE', `/api/reviews/${id}`);
+}
+
+/**
+ * POST /api/reviews/{id}/util → 204. Marca/desmarca (toggle) una review como útil.
+ * 403 si es la review propia. Tras esto conviene recargar la lista para ver el conteo.
+ */
+export function votarUtil(id) {
+  return enviar('POST', `/api/reviews/${id}/util`);
+}

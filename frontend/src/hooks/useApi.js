@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 /**
  * Hook para cargar datos de la API. Encapsula el patrón que se repite en toda
@@ -10,12 +10,16 @@ import { useState, useEffect } from 'react';
  * @param {Array}    deps     dependencias: cuando cambian, se vuelve a pedir.
  *                            Igual que el segundo argumento de useEffect.
  *
- * Devuelve { data, cargando, error }.
+ * Devuelve { data, cargando, error, recargar }. `recargar` vuelve a pedir los
+ * datos (útil tras crear/editar/borrar algo: refresca la lista sin remontar).
  */
 export function useApi(fetchFn, deps = []) {
   const [data, setData] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
+  // Cada bump de `tick` reejecuta el efecto: es la palanca de recargar().
+  const [tick, setTick] = useState(0);
+  const recargar = useCallback(() => setTick((t) => t + 1), []);
 
   useEffect(() => {
     // `activo` evita actualizar el estado si el componente se desmontó (o las
@@ -46,7 +50,7 @@ export function useApi(fetchFn, deps = []) {
       activo = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, deps);
+  }, [...deps, tick]);
 
-  return { data, cargando, error };
+  return { data, cargando, error, recargar };
 }
