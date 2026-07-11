@@ -1,17 +1,42 @@
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
+import CardActions from '@mui/material/CardActions';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Rating from '@mui/material/Rating';
 import Chip from '@mui/material/Chip';
+import Button from '@mui/material/Button';
 import ThumbUpOutlinedIcon from '@mui/icons-material/ThumbUpOutlined';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 
 /**
  * Una review: autor, fecha, puntuación en estrellas, comentario y cuántos la
- * marcaron útil. En Fase 3 el conteo de útiles es solo lectura; el botón para
- * votar (que necesita sesión) llega en Fase 4.
+ * marcaron útil. Con sesión (Fase 4c) el chip "útil" se vuelve un botón que
+ * togglea el voto, y la review propia muestra editar / borrar.
+ *
+ * Props:
+ *  - review: ReviewView { id, autor, puntuacion, comentario, fecha, esMia,
+ *    votosUtil, laVoteUtil }
+ *  - onVotar(): si viene, el chip es clickeable (usuario logueado y review ajena).
+ *  - onEditar(), onBorrar(): si vienen, se muestran los botones (review propia).
+ *  - ocupado: deshabilita las acciones mientras hay una mutación en curso.
  */
-export default function ReviewCard({ review }) {
+export default function ReviewCard({ review, onVotar, onEditar, onBorrar, ocupado }) {
+  const chipUtil = (
+    <Chip
+      icon={<ThumbUpOutlinedIcon />}
+      label={`Útil · ${review.votosUtil}`}
+      size="small"
+      variant={review.laVoteUtil ? 'filled' : 'outlined'}
+      color={review.laVoteUtil ? 'primary' : 'default'}
+      onClick={onVotar}
+      disabled={ocupado}
+      // clickable lo maneja MUI según si hay onClick; con onClick undefined queda
+      // como una etiqueta de solo lectura (deslogueado o review propia).
+    />
+  );
+
   return (
     <Card variant="outlined">
       <CardContent>
@@ -38,14 +63,34 @@ export default function ReviewCard({ review }) {
           {review.comentario}
         </Typography>
 
-        <Chip
-          icon={<ThumbUpOutlinedIcon />}
-          label={`Útil · ${review.votosUtil}`}
-          size="small"
-          variant="outlined"
-          color={review.laVoteUtil ? 'primary' : 'default'}
-        />
+        {chipUtil}
       </CardContent>
+
+      {review.esMia && (onEditar || onBorrar) && (
+        <CardActions sx={{ px: 2, pb: 2, pt: 0 }}>
+          {onEditar && (
+            <Button
+              size="small"
+              startIcon={<EditIcon />}
+              onClick={onEditar}
+              disabled={ocupado}
+            >
+              Editar
+            </Button>
+          )}
+          {onBorrar && (
+            <Button
+              size="small"
+              color="error"
+              startIcon={<DeleteIcon />}
+              onClick={onBorrar}
+              disabled={ocupado}
+            >
+              Borrar
+            </Button>
+          )}
+        </CardActions>
+      )}
     </Card>
   );
 }
