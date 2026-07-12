@@ -13,4 +13,10 @@ import lombok.Data;
 public class CatedraDetalle {
     private CatedraView catedra;
     private RatingBreakdown rating;
+    /**
+     * Si el usuario logueado ya dejó review acá (false sin sesión). Con la
+     * lista paginada el cliente no puede deducirlo: su review puede estar en
+     * una página que no cargó.
+     */
+    private boolean yaReviewe;
 }
