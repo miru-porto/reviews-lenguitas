@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link as RouterLink } from 'react-router-dom';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
@@ -12,6 +12,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogContentText from '@mui/material/DialogContentText';
 import DialogActions from '@mui/material/DialogActions';
+import Pagination from '@mui/material/Pagination';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -38,12 +39,36 @@ export default function ReviewsPage() {
   const { catedraId } = useParams();
   const { usuario } = useAuth();
   const [orden, setOrden] = useState('fecha');
+  // Página actual (0-based, como la pide la API). Cambiar de orden o de
+  // cátedra vuelve a la primera: la página N de un orden no significa nada
+  // en el otro.
+  const [pagina, setPagina] = useState(0);
 
   const detalle = useApi(() => getCatedra(catedraId), [catedraId]);
   const reviews = useApi(
-    () => getReviewsDeCatedra(catedraId, orden),
-    [catedraId, orden]
+    () => getReviewsDeCatedra(catedraId, orden, pagina),
+    [catedraId, orden, pagina]
   );
+
+  // La respuesta ahora es una página: las reviews en content y los metadatos
+  // (total de páginas, número actual) en page.
+  const listaReviews = reviews.data?.content ?? [];
+  const totalPaginas = reviews.data?.page?.totalPages ?? 0;
+
+  // Si la página quedó fuera de rango (ej: borré la única review de la última
+  // página), retrocedemos a la última que existe.
+  useEffect(() => {
+    if (reviews.data && listaReviews.length === 0 && pagina > 0) {
+      setPagina(Math.max(0, totalPaginas - 1));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reviews.data]);
+
+  // Al navegar a otra cátedra el componente no se remonta (cambia solo el
+  // parámetro de la ruta): hay que volver a la primera página a mano.
+  useEffect(() => {
+    setPagina(0);
+  }, [catedraId]);
 
   // Diálogo de formulario: null = cerrado; { modo:'crear' } o { modo:'editar', review }.
   const [formulario, setFormulario] = useState(null);
@@ -57,11 +82,9 @@ export default function ReviewsPage() {
   if (detalle.cargando) return <Cargando />;
   if (detalle.error) return <ErrorMensaje error={detalle.error} />;
 
-  const { catedra, rating } = detalle.data;
-  const listaReviews = reviews.data ?? [];
-  // Si alguna review de la lista es mía, ya reseñé esta cátedra: no ofrezco crear
-  // otra (el backend además la rechazaría con 409).
-  const yaReviewe = listaReviews.some((r) => r.esMia);
+  // yaReviewe lo calcula el backend: con la lista paginada no alcanza con mirar
+  // la página actual para saber si mi review existe (puede estar en otra página).
+  const { catedra, rating, yaReviewe } = detalle.data;
 
   /** Recarga lista + desglose tras una mutación (cambia conteos y promedio). */
   function recargarTodo() {
@@ -135,7 +158,10 @@ export default function ReviewsPage() {
           onChange={(e, nuevo) => {
             // El toggle devuelve null si se clickea el botón ya activo; lo
             // ignoramos para que siempre quede un orden seleccionado.
-            if (nuevo !== null) setOrden(nuevo);
+            if (nuevo !== null) {
+              setOrden(nuevo);
+              setPagina(0);
+            }
           }}
         >
           <ToggleButton value="fecha">Recientes</ToggleButton>
@@ -171,19 +197,34 @@ export default function ReviewsPage() {
       ) : listaReviews.length === 0 ? (
         <Vacio>Todavía no hay reviews para esta cátedra.</Vacio>
       ) : (
-        <Stack spacing={2}>
-          {listaReviews.map((r) => (
-            <ReviewCard
-              key={r.id}
-              review={r}
-              ocupado={ocupado}
-              // El chip vota solo si hay sesión y la review es ajena.
-              onVotar={usuario && !r.esMia ? () => votar(r.id) : undefined}
-              onEditar={r.esMia ? () => setFormulario({ modo: 'editar', review: r }) : undefined}
-              onBorrar={r.esMia ? () => setABorrar(r) : undefined}
-            />
-          ))}
-        </Stack>
+        <>
+          <Stack spacing={2}>
+            {listaReviews.map((r) => (
+              <ReviewCard
+                key={r.id}
+                review={r}
+                ocupado={ocupado}
+                // El chip vota solo si hay sesión y la review es ajena.
+                onVotar={usuario && !r.esMia ? () => votar(r.id) : undefined}
+                onEditar={r.esMia ? () => setFormulario({ modo: 'editar', review: r }) : undefined}
+                onBorrar={r.esMia ? () => setABorrar(r) : undefined}
+              />
+            ))}
+          </Stack>
+
+          {/* Paginador: solo aparece si hay más de una página. MUI cuenta las
+              páginas desde 1; la API desde 0, de ahí el +1/-1. */}
+          {totalPaginas > 1 && (
+            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+              <Pagination
+                count={totalPaginas}
+                page={pagina + 1}
+                onChange={(e, nueva) => setPagina(nueva - 1)}
+                color="primary"
+              />
+            </Box>
+          )}
+        </>
       )}
 
       {/* Formulario de crear / editar review. */}

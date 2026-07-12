@@ -115,9 +115,15 @@ export function getCatedra(catedraId) {
   return get(`/api/catedras/${catedraId}`);
 }
 
-/** GET /api/catedras/{id}/reviews?orden=fecha|utiles → [ReviewView] */
-export function getReviewsDeCatedra(catedraId, orden = 'fecha') {
-  return get(`/api/catedras/${catedraId}/reviews?orden=${orden}`);
+/**
+ * GET /api/catedras/{id}/reviews?orden=fecha|utiles&page=N → página de reviews.
+ * La respuesta es la forma paginada de Spring:
+ *   { content: [ReviewView], page: { size, number, totalElements, totalPages } }
+ * `page` es 0-based (la primera página es la 0). El tamaño lo decide el backend
+ * (5 por defecto); no lo mandamos para tener un solo lugar que lo defina.
+ */
+export function getReviewsDeCatedra(catedraId, orden = 'fecha', pagina = 0) {
+  return get(`/api/catedras/${catedraId}/reviews?orden=${orden}&page=${pagina}`);
 }
 
 /** GET /api/buscar?q=... → ResultadosBusqueda { consulta, materias, catedras } */
