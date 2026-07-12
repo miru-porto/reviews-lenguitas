@@ -11,6 +11,7 @@ import com.lenguas.ratemyprof.service.ReviewService;
 import com.lenguas.ratemyprof.service.UsuarioService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -42,7 +43,11 @@ public class ReviewController {
                              Model model) {
         String dniActual = (auth != null) ? auth.getName() : null;
         CatedraView catedra = catedraService.findViewById(id);
-        List<ReviewView> reviews = reviewService.findByCatedra(id, dniActual, orden);
+        // La página Thymeleaf muestra todo sin paginar: se retira en Fase 6 y no
+        // vale la pena sumarle paginador; unpaged trae la lista completa.
+        List<ReviewView> reviews = reviewService
+                .findByCatedra(id, dniActual, orden, Pageable.unpaged())
+                .getContent();
         model.addAttribute("catedra", catedra);
         model.addAttribute("reviews", reviews);
         model.addAttribute("desglose", catedraService.desgloseRating(id));

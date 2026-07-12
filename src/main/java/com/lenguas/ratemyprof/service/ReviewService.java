@@ -12,14 +12,14 @@ import com.lenguas.ratemyprof.repository.CatedraRepository;
 import com.lenguas.ratemyprof.repository.ReviewRepository;
 import com.lenguas.ratemyprof.repository.VotoUtilRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,10 +37,16 @@ public class ReviewService {
     private final VotoUtilRepository votoUtilRepository;
 
     /**
-     * Reviews de una cátedra como view models. Por defecto ordenadas por fecha
-     * (más recientes primero); con orden="utiles", por cantidad de votos útiles.
+     * Una página de reviews de una cátedra como view models. Por defecto
+     * ordenadas por fecha (más recientes primero); con orden="utiles", por
+     * cantidad de votos útiles. El orden lo aplica la base (ver repository):
+     * ordenar en memoria una página ya cortada daría un ranking global roto.
      */
-    public List<ReviewView> findByCatedra(Long catedraId, String dniUsuarioActual, String orden) {
+    public Page<ReviewView> findByCatedra(Long catedraId, String dniUsuarioActual, String orden, Pageable pageable) {
+        Page<Review> pagina = ORDEN_UTILES.equals(orden)
+                ? reviewRepository.findByCatedraIdOrdenVotosUtiles(catedraId, pageable)
+                : reviewRepository.findByCatedraIdOrderByFechaCreacionDesc(catedraId, pageable);
+
         // Votos por review en una sola query, para no hacer un COUNT por cada una.
         Map<Long, Long> votosPorReview = new HashMap<>();
         for (Object[] fila : votoUtilRepository.contarPorReviewDeCatedra(catedraId)) {
@@ -50,25 +56,25 @@ public class ReviewService {
                 ? Set.of()
                 : Set.copyOf(votoUtilRepository.reviewIdsVotadasPor(dniUsuarioActual, catedraId));
 
-        List<ReviewView> reviews = reviewRepository.findByCatedraIdOrderByFechaCreacionDesc(catedraId).stream()
-                .map(r -> new ReviewView(
-                        r.getId(),
-                        r.getUsuario().getNombre(),
-                        r.getPuntuacion(),
-                        r.getComentario(),
-                        r.getFechaCreacion().format(FORMATO_FECHA),
-                        dniUsuarioActual != null && dniUsuarioActual.equals(r.getUsuario().getDni()),
-                        votosPorReview.getOrDefault(r.getId(), 0L),
-                        misVotos.contains(r.getId())
-                ))
-                .toList();
+        return pagina.map(r -> new ReviewView(
+                r.getId(),
+                r.getUsuario().getNombre(),
+                r.getPuntuacion(),
+                r.getComentario(),
+                r.getFechaCreacion().format(FORMATO_FECHA),
+                dniUsuarioActual != null && dniUsuarioActual.equals(r.getUsuario().getDni()),
+                votosPorReview.getOrDefault(r.getId(), 0L),
+                misVotos.contains(r.getId())
+        ));
+    }
 
-        if (ORDEN_UTILES.equals(orden)) {
-            reviews = reviews.stream()
-                    .sorted(Comparator.comparingLong(ReviewView::getVotosUtil).reversed())
-                    .toList();
-        }
-        return reviews;
+    /**
+     * ¿El usuario ya dejó review en esta cátedra? Con la lista paginada el
+     * cliente ya no puede deducirlo mirando las reviews (la propia puede caer
+     * en otra página), así que se lo decimos explícitamente en el detalle.
+     */
+    public boolean yaReviewo(Long catedraId, String dniUsuario) {
+        return dniUsuario != null && reviewRepository.existsByUsuarioDniAndCatedraId(dniUsuario, catedraId);
     }
 
     /**

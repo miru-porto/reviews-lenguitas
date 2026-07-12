@@ -17,6 +17,9 @@ import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -55,8 +58,8 @@ class ReviewServiceTest {
 
     @BeforeEach
     void setUp() {
-        ana = usuario(1L, "Ana", "ana@ejemplo.com");
-        belen = usuario(2L, "Belén", "belen@ejemplo.com");
+        ana = usuario(1L, "Ana", "11111111");
+        belen = usuario(2L, "Belén", "22222222");
 
         catedra = new Catedra();
         catedra.setId(10L);
@@ -197,10 +200,10 @@ class ReviewServiceTest {
         verify(votoUtilRepository, never()).save(any());
     }
 
-    // ---------- findByCatedra: mapeo a view model + orden ----------
+    // ---------- findByCatedra: mapeo a view model + orden + paginación ----------
 
     @Test
-    void findByCatedra_mapeaViewsYOrdenaPorVotosUtiles() {
+    void findByCatedra_mapeaViewsYConservaLosDatosDePaginacion() {
         Review r2 = new Review();
         r2.setId(6L);
         r2.setUsuario(belen);
@@ -210,39 +213,74 @@ class ReviewServiceTest {
         r2.setFechaCreacion(LocalDateTime.of(2026, 6, 30, 12, 0));
         review.setFechaCreacion(LocalDateTime.of(2026, 7, 1, 12, 0));
 
-        when(reviewRepository.findByCatedraIdOrderByFechaCreacionDesc(10L))
-                .thenReturn(List.of(review, r2));
+        // El orden por votos lo resuelve la base: con orden=utiles el service
+        // tiene que usar la query de votos útiles. Simulamos que esta página de
+        // tamaño 2 es la primera de 7 reviews en total.
+        PageRequest pagina = PageRequest.of(0, 2);
+        when(reviewRepository.findByCatedraIdOrdenVotosUtiles(10L, pagina))
+                .thenReturn(new PageImpl<>(List.of(r2, review), pagina, 7));
         // r2 tiene 3 votos útiles; la review de Ana, ninguno.
         when(votoUtilRepository.contarPorReviewDeCatedra(10L))
                 .thenReturn(List.<Object[]>of(new Object[]{6L, 3L}));
         // Ana ya votó r2 como útil.
-        when(votoUtilRepository.reviewIdsVotadasPor("ana@ejemplo.com", 10L))
+        when(votoUtilRepository.reviewIdsVotadasPor("11111111", 10L))
                 .thenReturn(List.of(6L));
 
-        List<ReviewView> vistas = reviewService.findByCatedra(10L, "ana@ejemplo.com", "utiles");
+        Page<ReviewView> vistas = reviewService.findByCatedra(10L, "11111111", "utiles", pagina);
 
-        // Con orden=utiles, r2 (3 votos) pasa adelante aunque es más vieja.
         assertThat(vistas).extracting(ReviewView::getId).containsExactly(6L, 5L);
+        // El mapeo a views no pierde los metadatos de la página.
+        assertThat(vistas.getTotalElements()).isEqualTo(7);
+        assertThat(vistas.getTotalPages()).isEqualTo(4);
+        assertThat(vistas.getNumber()).isZero();
 
-        ReviewView deBelen = vistas.get(0);
+        ReviewView deBelen = vistas.getContent().get(0);
         assertThat(deBelen.getAutor()).isEqualTo("Belén");
         assertThat(deBelen.getVotosUtil()).isEqualTo(3);
         assertThat(deBelen.isEsMia()).isFalse();
         assertThat(deBelen.isLaVoteUtil()).isTrue();
         assertThat(deBelen.getFecha()).isEqualTo("30/06/2026");
 
-        ReviewView deAna = vistas.get(1);
+        ReviewView deAna = vistas.getContent().get(1);
         assertThat(deAna.isEsMia()).isTrue();
         assertThat(deAna.getVotosUtil()).isZero();
     }
 
+    @Test
+    void findByCatedra_conOrdenFechaUsaLaQueryPorFecha() {
+        PageRequest pagina = PageRequest.of(0, 5);
+        when(reviewRepository.findByCatedraIdOrderByFechaCreacionDesc(10L, pagina))
+                .thenReturn(Page.empty(pagina));
+        when(votoUtilRepository.contarPorReviewDeCatedra(10L)).thenReturn(List.of());
+
+        Page<ReviewView> vistas = reviewService.findByCatedra(10L, null, "fecha", pagina);
+
+        assertThat(vistas).isEmpty();
+        verify(reviewRepository, never()).findByCatedraIdOrdenVotosUtiles(any(), any());
+    }
+
+    // ---------- yaReviewo ----------
+
+    @Test
+    void yaReviewo_devuelveFalseSinSesionSinTocarLaBase() {
+        assertThat(reviewService.yaReviewo(10L, null)).isFalse();
+        verify(reviewRepository, never()).existsByUsuarioDniAndCatedraId(any(), any());
+    }
+
+    @Test
+    void yaReviewo_consultaPorDniYCatedra() {
+        when(reviewRepository.existsByUsuarioDniAndCatedraId("11111111", 10L)).thenReturn(true);
+
+        assertThat(reviewService.yaReviewo(10L, "11111111")).isTrue();
+    }
+
     // ---------- helpers ----------
 
-    private static Usuario usuario(Long id, String nombre, String email) {
+    private static Usuario usuario(Long id, String nombre, String dni) {
         Usuario u = new Usuario();
         u.setId(id);
         u.setNombre(nombre);
-        u.setEmail(email);
+        u.setDni(dni);
         return u;
     }
 }
