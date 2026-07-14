@@ -5,6 +5,7 @@ import CatedrasPage from './pages/CatedrasPage';
 import ReviewsPage from './pages/ReviewsPage';
 import BuscarPage from './pages/BuscarPage';
 import LoginPage from './pages/LoginPage';
+import AdminPage from './pages/AdminPage';
 
 /**
  * Mapa de rutas de la app. Todas cuelgan de <Layout /> (barra + buscador), así
@@ -16,6 +17,7 @@ import LoginPage from './pages/LoginPage';
  *  /catedras/:id         → reviews de esa cátedra
  *  /buscar?q=...         → resultados de búsqueda
  *  /login                → ingreso / alta por DNI
+ *  /admin                → CRUD del catálogo (solo rol ADMIN; la página redirige si no)
  */
 export default function App() {
   return (
@@ -27,6 +29,7 @@ export default function App() {
         <Route path="catedras/:catedraId" element={<ReviewsPage />} />
         <Route path="buscar" element={<BuscarPage />} />
         <Route path="login" element={<LoginPage />} />
+        <Route path="admin" element={<AdminPage />} />
         {/* Cualquier ruta desconocida vuelve al inicio. */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

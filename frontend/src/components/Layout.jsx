@@ -77,6 +77,13 @@ export default function Layout() {
           {!cargando &&
             (usuario ? (
               <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
+                {/* Ocultar el link no protege nada (la protección es del backend);
+                    solo evita mostrar una sección que un usuario común no puede usar. */}
+                {usuario.rol === 'ADMIN' && (
+                  <Button color="inherit" component={RouterLink} to="/admin">
+                    Admin
+                  </Button>
+                )}
                 <Typography sx={{ mr: 1, display: { xs: 'none', sm: 'block' } }}>
                   {usuario.nombre}
                 </Typography>

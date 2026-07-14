@@ -187,3 +187,60 @@ export function borrarReview(id) {
 export function votarUtil(id) {
   return enviar('POST', `/api/reviews/${id}/util`);
 }
+
+// ---- Administración del catálogo (Fase 5 / 2.6) ----
+//
+// Las lecturas son públicas; las escrituras exigen rol ADMIN en el backend
+// (401 sin sesión, 403 con sesión de usuario común). Los 409 traen un mensaje
+// explicativo: nombre duplicado, cátedra repetida, o borrado bloqueado porque
+// hay datos que dependen (cátedras de una materia, reviews de una cátedra).
+
+/** GET /api/profesores → [{ id, nombre, apellido }] ordenados por apellido. */
+export function getProfesores() {
+  return get('/api/profesores');
+}
+
+/** GET /api/catedras → [CatedraView { catedraId, materiaId, materiaNombre, nombreProfesor, apellidoProfesor }] */
+export function getCatedras() {
+  return get('/api/catedras');
+}
+
+/** POST /api/materias → 201 { id, nombre }. 409 si el nombre ya existe. */
+export function crearMateria(nombre) {
+  return enviar('POST', '/api/materias', { nombre });
+}
+
+/** PUT /api/materias/{id} → 204. 409 si el nombre nuevo choca con otra materia. */
+export function editarMateria(id, nombre) {
+  return enviar('PUT', `/api/materias/${id}`, { nombre });
+}
+
+/** DELETE /api/materias/{id} → 204. 409 si la materia tiene cátedras. */
+export function borrarMateria(id) {
+  return enviar('DELETE', `/api/materias/${id}`);
+}
+
+/** POST /api/profesores → 201 { id, nombre, apellido }. */
+export function crearProfesor(nombre, apellido) {
+  return enviar('POST', '/api/profesores', { nombre, apellido });
+}
+
+/** PUT /api/profesores/{id} → 204. */
+export function editarProfesor(id, nombre, apellido) {
+  return enviar('PUT', `/api/profesores/${id}`, { nombre, apellido });
+}
+
+/** DELETE /api/profesores/{id} → 204. 409 si el profesor tiene cátedras. */
+export function borrarProfesor(id) {
+  return enviar('DELETE', `/api/profesores/${id}`);
+}
+
+/** POST /api/catedras → 201 CatedraView. 409 si el par profesor+materia ya existe. */
+export function crearCatedra(profesorId, materiaId) {
+  return enviar('POST', '/api/catedras', { profesorId, materiaId });
+}
+
+/** DELETE /api/catedras/{id} → 204. 409 si la cátedra tiene reviews. */
+export function borrarCatedra(id) {
+  return enviar('DELETE', `/api/catedras/${id}`);
+}
