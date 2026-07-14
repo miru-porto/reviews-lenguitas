@@ -43,4 +43,7 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     List<Object[]> contarPorPuntuacion(@Param("catedraId") Long catedraId);
 
     boolean existsByUsuarioIdAndCatedraId(Long usuarioId, Long catedraId);
+
+    /** ¿La cátedra tiene reviews? Bloquea el borrado de cátedras desde el admin. */
+    boolean existsByCatedraId(Long catedraId);
 }

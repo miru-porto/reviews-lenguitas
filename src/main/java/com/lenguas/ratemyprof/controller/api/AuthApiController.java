@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
@@ -24,8 +25,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Collections;
 
 /**
  * Autenticación de la API por DNI, sin contraseña. El DNI es la identidad: si
@@ -58,7 +57,7 @@ public class AuthApiController {
         Usuario usuario = usuarioService.buscarPorDni(req.getDni())
                 .orElseThrow(() -> new NotFoundException("DNI no registrado"));
 
-        iniciarSesion(usuario.getDni(), request, response);
+        iniciarSesion(usuario, request, response);
         return UsuarioView.de(usuario);
     }
 
@@ -71,7 +70,7 @@ public class AuthApiController {
                                                 HttpServletRequest request,
                                                 HttpServletResponse response) {
         Usuario usuario = usuarioService.registrar(req.getDni(), req.getNombre());
-        iniciarSesion(usuario.getDni(), request, response);
+        iniciarSesion(usuario, request, response);
         return ResponseEntity.status(HttpStatus.CREATED).body(UsuarioView.de(usuario));
     }
 
@@ -96,14 +95,16 @@ public class AuthApiController {
     }
 
     /**
-     * Marca la sesión como autenticada para este DNI. Como no hay credenciales
+     * Marca la sesión como autenticada para este usuario. Como no hay credenciales
      * que verificar, construimos directamente un Authentication ya autenticado
      * (el principal es el DNI, que es lo que devuelve auth.getName()) y lo
-     * persistimos en la HttpSession.
+     * persistimos en la HttpSession. Las authorities salen del rol: con ellas
+     * la filter chain puede exigir hasRole("ADMIN") en los endpoints de admin.
      */
-    private void iniciarSesion(String dni, HttpServletRequest request, HttpServletResponse response) {
-        Authentication authentication =
-                new UsernamePasswordAuthenticationToken(dni, null, Collections.emptyList());
+    private void iniciarSesion(Usuario usuario, HttpServletRequest request, HttpServletResponse response) {
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                usuario.getDni(), null,
+                AuthorityUtils.createAuthorityList("ROLE_" + usuario.getRol().name()));
 
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(authentication);

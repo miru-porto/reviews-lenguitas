@@ -80,6 +80,11 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
                 // Resto de la lectura, pública.
                 .requestMatchers(HttpMethod.GET, "/api/**").permitAll()
+                // Escritura del catálogo (materias/profesores/cátedras), solo ADMIN.
+                // Los GET de estas rutas ya matchearon el permitAll de arriba, así
+                // que esta regla solo atrapa POST/PUT/DELETE. hasRole("ADMIN")
+                // busca la authority "ROLE_ADMIN" (el prefijo lo agrega Spring).
+                .requestMatchers("/api/materias/**", "/api/profesores/**", "/api/catedras/**").hasRole("ADMIN")
                 // Todo lo demás (crear/editar/borrar, logout) pide sesión.
                 .anyRequest().authenticated()
             )

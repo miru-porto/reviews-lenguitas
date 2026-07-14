@@ -3,6 +3,7 @@ package com.lenguas.ratemyprof.config;
 import com.lenguas.ratemyprof.model.Catedra;
 import com.lenguas.ratemyprof.model.Materia;
 import com.lenguas.ratemyprof.model.Profesor;
+import com.lenguas.ratemyprof.model.Rol;
 import com.lenguas.ratemyprof.model.Usuario;
 import com.lenguas.ratemyprof.repository.CatedraRepository;
 import com.lenguas.ratemyprof.repository.MateriaRepository;
@@ -38,6 +39,30 @@ public class DataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
+        seedCatalogo();
+        seedAdmin();
+    }
+
+    /**
+     * Garantiza que exista al menos un admin. Corre SIEMPRE (no solo con la base
+     * vacía): las bases creadas antes de que existiera el rol también lo
+     * necesitan. Si el DNI ya estaba registrado como usuario común, lo promueve.
+     */
+    private void seedAdmin() {
+        if (usuarioRepository.existsByRol(Rol.ADMIN)) {
+            return;
+        }
+        Usuario admin = usuarioRepository.findByDni("99999999").orElseGet(() -> {
+            Usuario u = new Usuario();
+            u.setNombre("Admin");
+            u.setDni("99999999");
+            return u;
+        });
+        admin.setRol(Rol.ADMIN);
+        usuarioRepository.save(admin);
+    }
+
+    private void seedCatalogo() {
         // Si ya hay datos, no sembramos de nuevo.
         if (materiaRepository.count() > 0) {
             return;

@@ -4,13 +4,13 @@ import com.lenguas.ratemyprof.exception.ConflictException;
 import com.lenguas.ratemyprof.model.Usuario;
 import com.lenguas.ratemyprof.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
 import java.util.Optional;
 
 @Service
@@ -30,7 +30,8 @@ public class UsuarioService implements UserDetailsService {
         Usuario usuario = usuarioRepository.findByDni(dni)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + dni));
 
-        return new User(usuario.getDni(), "", Collections.emptyList());
+        return new User(usuario.getDni(), "",
+                AuthorityUtils.createAuthorityList("ROLE_" + usuario.getRol().name()));
     }
 
     /** Alta de un usuario nuevo. 409 si el DNI ya está registrado. */

@@ -42,4 +42,17 @@ public interface CatedraRepository extends JpaRepository<Catedra, Long> {
                OR LOWER(p.apellido) LIKE LOWER(CONCAT('%', :q, '%'))
             """)
     List<Catedra> buscarPorProfesor(@Param("q") String q);
+
+    /**
+     * Todas las cátedras con profesor y materia ya cargados (JOIN FETCH), para
+     * la tabla del admin. Sin el fetch, serializar la lista dispararía una
+     * query por cátedra (N+1) al tocar las relaciones LAZY.
+     */
+    @Query("SELECT c FROM Catedra c JOIN FETCH c.profesor JOIN FETCH c.materia ORDER BY c.materia.nombre, c.profesor.apellido")
+    List<Catedra> findAllConProfesorYMateria();
+
+    // Chequeos de integridad para el CRUD del admin.
+    boolean existsByProfesorIdAndMateriaId(Long profesorId, Long materiaId);
+    boolean existsByMateriaId(Long materiaId);
+    boolean existsByProfesorId(Long profesorId);
 }
