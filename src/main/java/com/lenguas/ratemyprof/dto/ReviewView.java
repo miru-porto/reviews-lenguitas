@@ -14,6 +14,8 @@ public class ReviewView {
     private String autor;
     private Integer puntuacion;
     private String comentario;
+    /** Cuatrimestre cursado, ej: "1C 2025". Null en reviews anteriores al campo. */
+    private String cuatrimestre;
     private String fecha;
     /** true si la review pertenece al usuario logueado (para mostrarle editar/borrar). */
     private boolean esMia;

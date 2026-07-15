@@ -1,10 +1,12 @@
 package com.lenguas.ratemyprof.service;
 
 import com.lenguas.ratemyprof.dto.ReviewView;
+import com.lenguas.ratemyprof.exception.BadRequestException;
 import com.lenguas.ratemyprof.exception.ConflictException;
 import com.lenguas.ratemyprof.exception.ForbiddenException;
 import com.lenguas.ratemyprof.exception.NotFoundException;
 import com.lenguas.ratemyprof.model.Catedra;
+import com.lenguas.ratemyprof.model.Cuatrimestre;
 import com.lenguas.ratemyprof.model.Review;
 import com.lenguas.ratemyprof.model.Usuario;
 import com.lenguas.ratemyprof.model.VotoUtil;
@@ -61,6 +63,7 @@ public class ReviewService {
                 r.getUsuario().getNombre(),
                 r.getPuntuacion(),
                 r.getComentario(),
+                r.getCuatrimestre(),
                 r.getFechaCreacion().format(FORMATO_FECHA),
                 dniUsuarioActual != null && dniUsuarioActual.equals(r.getUsuario().getDni()),
                 votosPorReview.getOrDefault(r.getId(), 0L),
@@ -92,10 +95,13 @@ public class ReviewService {
     }
 
     /** Edita una review propia. Devuelve el id de la cátedra para redirigir. */
-    public Long editar(Long reviewId, Usuario usuario, Integer puntuacion, String comentario) {
+    public Long editar(Long reviewId, Usuario usuario, Integer puntuacion, String comentario,
+                       String cuatrimestre) {
+        validarCuatrimestre(cuatrimestre);
         Review review = obtenerPropia(reviewId, usuario);
         review.setPuntuacion(puntuacion);
         review.setComentario(comentario);
+        review.setCuatrimestre(cuatrimestre);
         reviewRepository.save(review);
         return review.getCatedra().getId();
     }
@@ -136,7 +142,10 @@ public class ReviewService {
         return review.getCatedra().getId();
     }
 
-    public Review crear(Long catedraId, Usuario usuario, Integer puntuacion, String comentario) {
+    public Review crear(Long catedraId, Usuario usuario, Integer puntuacion, String comentario,
+                        String cuatrimestre) {
+        validarCuatrimestre(cuatrimestre);
+
         // Validar que el usuario no haya hecho review de esta cátedra ya
         if (reviewRepository.existsByUsuarioIdAndCatedraId(usuario.getId(), catedraId)) {
             throw new ConflictException("Ya dejaste una review para esta cátedra");
@@ -150,8 +159,20 @@ public class ReviewService {
         review.setCatedra(catedra);
         review.setPuntuacion(puntuacion);
         review.setComentario(comentario);
+        review.setCuatrimestre(cuatrimestre);
         review.setFechaCreacion(LocalDateTime.now());
 
         return reviewRepository.save(review);
+    }
+
+    /**
+     * El @NotBlank del DTO solo garantiza que venga algo; que sea una opción real
+     * ("1C 2018" hasta el cuatrimestre en curso) se verifica acá, para que un
+     * cliente que no pase por el form no pueda inventar valores.
+     */
+    private void validarCuatrimestre(String cuatrimestre) {
+        if (!Cuatrimestre.esValido(cuatrimestre)) {
+            throw new BadRequestException("El cuatrimestre no es válido");
+        }
     }
 }

@@ -35,6 +35,15 @@ public class Review {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String comentario;
 
+    /**
+     * Cuatrimestre en que el usuario cursó, ej: "1C 2025" (ver Cuatrimestre).
+     * Obligatorio al crear/editar (lo exige el borde web), pero nullable en la
+     * base: las reviews anteriores a este campo no lo tienen. Se endurecerá
+     * con una migración Flyway cuando se backfilleen esas filas.
+     */
+    @Column(length = 7)
+    private String cuatrimestre;
+
     @Column(name = "fecha_creacion")
     private LocalDateTime fechaCreacion = LocalDateTime.now();
 }

@@ -44,7 +44,8 @@ public class ReviewApiController {
                                                       Authentication auth) {
         Usuario usuario = usuarioService.findByDni(auth.getName());
         Review review = reviewService.crear(
-                req.getCatedraId(), usuario, req.getPuntuacion(), req.getComentario());
+                req.getCatedraId(), usuario, req.getPuntuacion(), req.getComentario(),
+                req.getCuatrimestre());
         ReviewCreadaResponse body = new ReviewCreadaResponse(review.getId(), req.getCatedraId());
         return ResponseEntity.created(URI.create("/api/reviews/" + review.getId())).body(body);
     }
@@ -55,7 +56,8 @@ public class ReviewApiController {
                                        @Valid @RequestBody ReviewForm form,
                                        Authentication auth) {
         Usuario usuario = usuarioService.findByDni(auth.getName());
-        reviewService.editar(id, usuario, form.getPuntuacion(), form.getComentario());
+        reviewService.editar(id, usuario, form.getPuntuacion(), form.getComentario(),
+                form.getCuatrimestre());
         return ResponseEntity.noContent().build();
     }
 

@@ -20,6 +20,13 @@ import java.util.Map;
 @RestControllerAdvice(basePackages = "com.lenguas.ratemyprof.controller.api")
 public class ApiExceptionHandler {
 
+    /** Entrada inválida que detecta el service, no Bean Validation (ej: cuatrimestre fuera de rango). */
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<ApiError> badRequest(BadRequestException e) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiError(e.getMessage()));
+    }
+
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ApiError> notFound(NotFoundException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)

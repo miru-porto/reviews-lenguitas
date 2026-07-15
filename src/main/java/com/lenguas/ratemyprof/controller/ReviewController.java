@@ -4,6 +4,7 @@ import com.lenguas.ratemyprof.dto.CatedraView;
 import com.lenguas.ratemyprof.dto.ReviewForm;
 import com.lenguas.ratemyprof.dto.ReviewView;
 import com.lenguas.ratemyprof.model.Catedra;
+import com.lenguas.ratemyprof.model.Cuatrimestre;
 import com.lenguas.ratemyprof.model.Review;
 import com.lenguas.ratemyprof.model.Usuario;
 import com.lenguas.ratemyprof.service.CatedraService;
@@ -63,6 +64,7 @@ public class ReviewController {
         Catedra catedra = catedraService.findById(catedraId);
         model.addAttribute("catedra", catedra);
         model.addAttribute("reviewForm", new ReviewForm());
+        model.addAttribute("opcionesCuatrimestre", Cuatrimestre.opciones());
         return "nueva-review";
     }
 
@@ -77,15 +79,18 @@ public class ReviewController {
                               Model model) {
         if (result.hasErrors()) {
             model.addAttribute("catedra", catedraService.findById(catedraId));
+            model.addAttribute("opcionesCuatrimestre", Cuatrimestre.opciones());
             return "nueva-review";
         }
         try {
             Usuario usuario = usuarioService.findByDni(auth.getName());
-            reviewService.crear(catedraId, usuario, form.getPuntuacion(), form.getComentario());
+            reviewService.crear(catedraId, usuario, form.getPuntuacion(), form.getComentario(),
+                    form.getCuatrimestre());
             return "redirect:/catedra/" + catedraId + "?exito";
         } catch (RuntimeException e) {
             model.addAttribute("error", e.getMessage());
             model.addAttribute("catedra", catedraService.findById(catedraId));
+            model.addAttribute("opcionesCuatrimestre", Cuatrimestre.opciones());
             return "nueva-review";
         }
     }
@@ -102,10 +107,13 @@ public class ReviewController {
         ReviewForm form = new ReviewForm();
         form.setPuntuacion(review.getPuntuacion());
         form.setComentario(review.getComentario());
+        // Puede ser null en reviews viejas: el usuario deberá elegirlo al guardar.
+        form.setCuatrimestre(review.getCuatrimestre());
 
         model.addAttribute("reviewForm", form);
         model.addAttribute("catedra", catedraService.findViewById(review.getCatedra().getId()));
         model.addAttribute("reviewId", id);
+        model.addAttribute("opcionesCuatrimestre", Cuatrimestre.opciones());
         return "editar-review";
     }
 
@@ -123,9 +131,11 @@ public class ReviewController {
             Review review = reviewService.obtenerPropia(id, usuario);
             model.addAttribute("catedra", catedraService.findViewById(review.getCatedra().getId()));
             model.addAttribute("reviewId", id);
+            model.addAttribute("opcionesCuatrimestre", Cuatrimestre.opciones());
             return "editar-review";
         }
-        Long catedraId = reviewService.editar(id, usuario, form.getPuntuacion(), form.getComentario());
+        Long catedraId = reviewService.editar(id, usuario, form.getPuntuacion(), form.getComentario(),
+                form.getCuatrimestre());
         return "redirect:/catedra/" + catedraId + "?editado";
     }
 

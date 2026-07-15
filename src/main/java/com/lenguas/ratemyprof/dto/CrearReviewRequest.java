@@ -26,4 +26,8 @@ public class CrearReviewRequest {
     @NotBlank(message = "El comentario no puede estar vacío")
     @Size(max = 2000, message = "El comentario no puede superar los 2000 caracteres")
     private String comentario;
+
+    /** Ej: "1C 2025". Que sea una opción válida lo verifica el service (Cuatrimestre). */
+    @NotBlank(message = "Elegí el cuatrimestre que cursaste")
+    private String cuatrimestre;
 }
