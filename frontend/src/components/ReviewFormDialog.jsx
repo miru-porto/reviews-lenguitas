@@ -9,7 +9,10 @@ import Rating from '@mui/material/Rating';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
 import { crearReview, editarReview } from '../api/api';
+import { opcionesCuatrimestre } from '../utils/cuatrimestres';
 
 const MAX_COMENTARIO = 2000;
 
@@ -27,7 +30,7 @@ const MAX_COMENTARIO = 2000;
  *  - open, onClose, onGuardado
  *  - modo: 'crear' | 'editar'
  *  - catedraId: requerido en modo 'crear'
- *  - review: { id, puntuacion, comentario } requerido en modo 'editar'
+ *  - review: { id, puntuacion, comentario, cuatrimestre } requerido en modo 'editar'
  */
 export default function ReviewFormDialog({
   open,
@@ -41,6 +44,9 @@ export default function ReviewFormDialog({
 
   const [puntuacion, setPuntuacion] = useState(esEditar ? review.puntuacion : 0);
   const [comentario, setComentario] = useState(esEditar ? review.comentario : '');
+  // Las reviews anteriores al campo no tienen cuatrimestre (null): al editarlas
+  // arranca sin selección y hay que elegirlo para poder guardar.
+  const [cuatrimestre, setCuatrimestre] = useState(esEditar ? (review.cuatrimestre ?? '') : '');
   const [error, setError] = useState('');
   const [enviando, setEnviando] = useState(false);
 
@@ -54,6 +60,10 @@ export default function ReviewFormDialog({
       setError('Elegí una puntuación.');
       return;
     }
+    if (!cuatrimestre) {
+      setError('Elegí el cuatrimestre que cursaste.');
+      return;
+    }
     if (comentario.trim() === '') {
       setError('El comentario no puede estar vacío.');
       return;
@@ -62,9 +72,9 @@ export default function ReviewFormDialog({
     setEnviando(true);
     try {
       if (esEditar) {
-        await editarReview(review.id, puntuacion, comentario.trim());
+        await editarReview(review.id, puntuacion, comentario.trim(), cuatrimestre);
       } else {
-        await crearReview(catedraId, puntuacion, comentario.trim());
+        await crearReview(catedraId, puntuacion, comentario.trim(), cuatrimestre);
       }
       onGuardado();
       onClose();
@@ -94,6 +104,35 @@ export default function ReviewFormDialog({
             onChange={(e, valor) => setPuntuacion(valor ?? 0)}
             sx={{ mb: 2 }}
           />
+
+          <Typography component="legend" sx={{ mb: 0.5 }}>
+            Cuatrimestre cursado
+          </Typography>
+          <Select
+            value={cuatrimestre}
+            onChange={(e) => setCuatrimestre(e.target.value)}
+            fullWidth
+            // Select no tiene placeholder nativo: displayEmpty hace que con valor
+            // vacío se llame igual a renderValue, y ahí mostramos el texto gris.
+            displayEmpty
+            renderValue={(valor) =>
+              valor || (
+                <Typography component="span" color="text.secondary">
+                  Seleccioná el cuatrimestre
+                </Typography>
+              )
+            }
+            // Son ~18 opciones (desde 1C 2018): limitamos el alto del menú para
+            // que no ocupe toda la pantalla y se scrollee como una lista.
+            MenuProps={{ slotProps: { paper: { sx: { maxHeight: 320 } } } }}
+            sx={{ mb: 2 }}
+          >
+            {opcionesCuatrimestre().map((c) => (
+              <MenuItem key={c} value={c}>
+                {c}
+              </MenuItem>
+            ))}
+          </Select>
 
           <TextField
             label="Comentario"

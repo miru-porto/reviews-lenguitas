@@ -16,8 +16,8 @@ import DeleteIcon from '@mui/icons-material/Delete';
  * togglea el voto, y la review propia muestra editar / borrar.
  *
  * Props:
- *  - review: ReviewView { id, autor, puntuacion, comentario, fecha, esMia,
- *    votosUtil, laVoteUtil }
+ *  - review: ReviewView { id, autor, puntuacion, comentario, cuatrimestre,
+ *    fecha, esMia, votosUtil, laVoteUtil }
  *  - onVotar(): si viene, el chip es clickeable (usuario logueado y review ajena).
  *  - onEditar(), onBorrar(): si vienen, se muestran los botones (review propia).
  *  - ocupado: deshabilita las acciones mientras hay una mutación en curso.
@@ -53,7 +53,8 @@ export default function ReviewCard({ review, onVotar, onEditar, onBorrar, ocupad
               {review.autor}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {review.fecha}
+              {/* Las reviews anteriores al campo cuatrimestre no lo tienen. */}
+              {review.cuatrimestre ? `${review.fecha} · Cursó en ${review.cuatrimestre}` : review.fecha}
             </Typography>
           </Box>
           <Rating value={review.puntuacion} readOnly size="small" />

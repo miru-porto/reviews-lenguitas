@@ -161,18 +161,19 @@ export function getMe() {
 
 /**
  * POST /api/reviews → 201 { id, catedraId }. Requiere sesión (401 si no hay).
- * 409 si el usuario ya dejó una review para esa cátedra; 400 si el body es inválido.
+ * 409 si el usuario ya dejó una review para esa cátedra; 400 si el body es
+ * inválido (incluye cuatrimestre vacío o fuera del rango 1C 2018..hoy).
  */
-export function crearReview(catedraId, puntuacion, comentario) {
-  return enviar('POST', '/api/reviews', { catedraId, puntuacion, comentario });
+export function crearReview(catedraId, puntuacion, comentario, cuatrimestre) {
+  return enviar('POST', '/api/reviews', { catedraId, puntuacion, comentario, cuatrimestre });
 }
 
 /**
  * PUT /api/reviews/{id} → 204. Edita una review propia; el backend verifica el
  * dueño (403 si es ajena, 404 si no existe, 400 si el body es inválido).
  */
-export function editarReview(id, puntuacion, comentario) {
-  return enviar('PUT', `/api/reviews/${id}`, { puntuacion, comentario });
+export function editarReview(id, puntuacion, comentario, cuatrimestre) {
+  return enviar('PUT', `/api/reviews/${id}`, { puntuacion, comentario, cuatrimestre });
 }
 
 /** DELETE /api/reviews/{id} → 204. Borra una review propia (403 si es ajena). */
