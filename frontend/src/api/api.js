@@ -100,7 +100,7 @@ async function manejarRespuesta(respuesta) {
 
 // ---- Endpoints de lectura (Fase 3) ----
 
-/** GET /api/materias → [{ id, nombre }] */
+/** GET /api/materias → [{ id, nombre, anio }] ordenadas por año y nombre. */
 export function getMaterias() {
   return get('/api/materias');
 }
@@ -206,14 +206,14 @@ export function getCatedras() {
   return get('/api/catedras');
 }
 
-/** POST /api/materias → 201 { id, nombre }. 409 si el nombre ya existe. */
-export function crearMateria(nombre) {
-  return enviar('POST', '/api/materias', { nombre });
+/** POST /api/materias → 201 { id, nombre, anio }. 409 si el nombre ya existe. */
+export function crearMateria(nombre, anio) {
+  return enviar('POST', '/api/materias', { nombre, anio });
 }
 
 /** PUT /api/materias/{id} → 204. 409 si el nombre nuevo choca con otra materia. */
-export function editarMateria(id, nombre) {
-  return enviar('PUT', `/api/materias/${id}`, { nombre });
+export function editarMateria(id, nombre, anio) {
+  return enviar('PUT', `/api/materias/${id}`, { nombre, anio });
 }
 
 /** DELETE /api/materias/{id} → 204. 409 si la materia tiene cátedras. */
@@ -221,7 +221,7 @@ export function borrarMateria(id) {
   return enviar('DELETE', `/api/materias/${id}`);
 }
 
-/** POST /api/profesores → 201 { id, nombre, apellido }. */
+/** POST /api/profesores → 201 { id, nombre, apellido }. El nombre es opcional. */
 export function crearProfesor(nombre, apellido) {
   return enviar('POST', '/api/profesores', { nombre, apellido });
 }

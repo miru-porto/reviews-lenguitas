@@ -109,18 +109,23 @@ function AvisoError({ mensaje, onCerrar }) {
 function MateriasAdmin() {
   const { data: materias, cargando, error, recargar } = useApi(api.getMaterias, []);
 
-  // dialogo: null (cerrado) | { id: null, nombre: '' } (crear) | { id, nombre } (editar)
+  // dialogo: null (cerrado) | { id: null, nombre: '', anio: '' } (crear)
+  //          | { id, nombre, anio } (editar)
   const [dialogo, setDialogo] = useState(null);
   const [errorDialogo, setErrorDialogo] = useState(null);
   const [aBorrar, setABorrar] = useState(null); // materia seleccionada para borrar
   const [aviso, setAviso] = useState(null);
 
   async function guardar() {
+    if (dialogo.anio === '') {
+      setErrorDialogo('Elegí el año de cursada');
+      return;
+    }
     try {
       if (dialogo.id === null) {
-        await api.crearMateria(dialogo.nombre);
+        await api.crearMateria(dialogo.nombre, dialogo.anio);
       } else {
-        await api.editarMateria(dialogo.id, dialogo.nombre);
+        await api.editarMateria(dialogo.id, dialogo.nombre, dialogo.anio);
       }
       setDialogo(null);
       setErrorDialogo(null);
@@ -151,7 +156,7 @@ function MateriasAdmin() {
         <Button
           variant="contained"
           startIcon={<AddIcon />}
-          onClick={() => setDialogo({ id: null, nombre: '' })}
+          onClick={() => setDialogo({ id: null, nombre: '', anio: '' })}
         >
           Agregar materia
         </Button>
@@ -165,6 +170,7 @@ function MateriasAdmin() {
             <TableHead>
               <TableRow>
                 <TableCell>Nombre</TableCell>
+                <TableCell>Año</TableCell>
                 <TableCell align="right">Acciones</TableCell>
               </TableRow>
             </TableHead>
@@ -172,11 +178,14 @@ function MateriasAdmin() {
               {materias.map((m) => (
                 <TableRow key={m.id}>
                   <TableCell>{m.nombre}</TableCell>
+                  <TableCell>{m.anio ?? '—'}</TableCell>
                   <TableCell align="right">
                     <IconButton
                       size="small"
                       aria-label="editar"
-                      onClick={() => setDialogo({ id: m.id, nombre: m.nombre })}
+                      onClick={() =>
+                        setDialogo({ id: m.id, nombre: m.nombre, anio: m.anio ?? '' })
+                      }
                     >
                       <EditIcon fontSize="small" />
                     </IconButton>
@@ -212,6 +221,20 @@ function MateriasAdmin() {
             value={dialogo?.nombre ?? ''}
             onChange={(e) => setDialogo({ ...dialogo, nombre: e.target.value })}
           />
+          <TextField
+            select
+            fullWidth
+            label="Año de cursada"
+            margin="dense"
+            value={dialogo?.anio ?? ''}
+            onChange={(e) => setDialogo({ ...dialogo, anio: e.target.value })}
+          >
+            {[1, 2, 3, 4, 5].map((a) => (
+              <MenuItem key={a} value={a}>
+                {a}°{a === 5 ? ' (plan de 5 años)' : ''}
+              </MenuItem>
+            ))}
+          </TextField>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDialogo(null)}>Cancelar</Button>
@@ -335,17 +358,18 @@ function ProfesoresAdmin() {
           <TextField
             autoFocus
             fullWidth
-            label="Nombre"
-            margin="dense"
-            value={dialogo?.nombre ?? ''}
-            onChange={(e) => setDialogo({ ...dialogo, nombre: e.target.value })}
-          />
-          <TextField
-            fullWidth
             label="Apellido"
             margin="dense"
             value={dialogo?.apellido ?? ''}
             onChange={(e) => setDialogo({ ...dialogo, apellido: e.target.value })}
+          />
+          {/* Los horarios solo publican apellidos: el nombre puede no saberse. */}
+          <TextField
+            fullWidth
+            label="Nombre (opcional)"
+            margin="dense"
+            value={dialogo?.nombre ?? ''}
+            onChange={(e) => setDialogo({ ...dialogo, nombre: e.target.value })}
           />
         </DialogContent>
         <DialogActions>
@@ -357,7 +381,7 @@ function ProfesoresAdmin() {
       </Dialog>
 
       <ConfirmarBorrado
-        item={aBorrar ? `a ${aBorrar.nombre} ${aBorrar.apellido}` : null}
+        item={aBorrar ? `a ${`${aBorrar.nombre} ${aBorrar.apellido}`.trim()}` : null}
         onConfirmar={borrar}
         onCerrar={() => setABorrar(null)}
       />
@@ -439,7 +463,10 @@ function CatedrasAdmin() {
                 <TableRow key={c.catedraId}>
                   <TableCell>{c.materiaNombre}</TableCell>
                   <TableCell>
-                    {c.apellidoProfesor}, {c.nombreProfesor}
+                    {/* La coma solo si el nombre se conoce (suele estar vacío). */}
+                    {c.nombreProfesor
+                      ? `${c.apellidoProfesor}, ${c.nombreProfesor}`
+                      : c.apellidoProfesor}
                   </TableCell>
                   <TableCell align="right">
                     {/* Sin editar: una cátedra ES el par profesor+materia; cambiarlo
@@ -477,7 +504,7 @@ function CatedrasAdmin() {
           >
             {(profesores ?? []).map((p) => (
               <MenuItem key={p.id} value={p.id}>
-                {p.apellido}, {p.nombre}
+                {p.nombre ? `${p.apellido}, ${p.nombre}` : p.apellido}
               </MenuItem>
             ))}
           </TextField>
