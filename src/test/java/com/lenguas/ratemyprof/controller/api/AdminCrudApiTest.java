@@ -73,7 +73,7 @@ class AdminCrudApiTest {
         mockMvc.perform(post("/api/materias")
                         .with(csrf())
                         .contentType("application/json")
-                        .content("{\"nombre\": \"Fonética II\"}"))
+                        .content("{\"nombre\": \"Fonética II\", \"anio\": 2}"))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -83,23 +83,24 @@ class AdminCrudApiTest {
         mockMvc.perform(post("/api/materias")
                         .with(csrf())
                         .contentType("application/json")
-                        .content("{\"nombre\": \"Fonética II\"}"))
+                        .content("{\"nombre\": \"Fonética II\", \"anio\": 2}"))
                 .andExpect(status().isForbidden());
     }
 
     @Test
     @WithMockUser(roles = "ADMIN")
     void crearMateria_admin_devuelve201() throws Exception {
-        when(adminService.crearMateria("Fonética II"))
-                .thenReturn(new MateriaView(10L, "Fonética II"));
+        when(adminService.crearMateria("Fonética II", 2))
+                .thenReturn(new MateriaView(10L, "Fonética II", 2));
 
         mockMvc.perform(post("/api/materias")
                         .with(csrf())
                         .contentType("application/json")
-                        .content("{\"nombre\": \"Fonética II\"}"))
+                        .content("{\"nombre\": \"Fonética II\", \"anio\": 2}"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(10))
-                .andExpect(jsonPath("$.nombre").value("Fonética II"));
+                .andExpect(jsonPath("$.nombre").value("Fonética II"))
+                .andExpect(jsonPath("$.anio").value(2));
     }
 
     // Los GET siguen públicos aun después de sumar la regla de ADMIN.
@@ -118,10 +119,11 @@ class AdminCrudApiTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     void crearMateria_nombreVacio_devuelve400() throws Exception {
+        // Con anio válido: el único error de campos tiene que ser el nombre.
         mockMvc.perform(post("/api/materias")
                         .with(csrf())
                         .contentType("application/json")
-                        .content("{\"nombre\": \"\"}"))
+                        .content("{\"nombre\": \"\", \"anio\": 2}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.campos.nombre").exists());
     }

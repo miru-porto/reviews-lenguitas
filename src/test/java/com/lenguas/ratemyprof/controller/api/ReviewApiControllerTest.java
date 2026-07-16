@@ -65,6 +65,7 @@ class ReviewApiControllerTest {
         req.setCatedraId(10L);
         req.setPuntuacion(5);
         req.setComentario("Excelente cursada");
+        req.setCuatrimestre("1C 2026");
         return req;
     }
 
@@ -114,7 +115,7 @@ class ReviewApiControllerTest {
         creada.setUsuario(ana);
 
         when(usuarioService.findByDni(DNI)).thenReturn(ana);
-        when(reviewService.crear(eq(10L), eq(ana), eq(5), any())).thenReturn(creada);
+        when(reviewService.crear(eq(10L), eq(ana), eq(5), any(), any())).thenReturn(creada);
 
         mockMvc.perform(post("/api/reviews")
                         .with(csrf())
@@ -134,12 +135,13 @@ class ReviewApiControllerTest {
         ana.setId(1L);
         ana.setDni(DNI);
         when(usuarioService.findByDni(DNI)).thenReturn(ana);
-        when(reviewService.editar(anyLong(), any(), any(), any()))
+        when(reviewService.editar(anyLong(), any(), any(), any(), any()))
                 .thenThrow(new ForbiddenException("No tenés permiso para modificar esta review"));
 
         ReviewForm form = new ReviewForm();
         form.setPuntuacion(3);
         form.setComentario("Editado");
+        form.setCuatrimestre("1C 2026");
 
         mockMvc.perform(put("/api/reviews/5")
                         .with(csrf())

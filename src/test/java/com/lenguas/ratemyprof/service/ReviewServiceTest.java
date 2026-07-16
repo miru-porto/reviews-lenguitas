@@ -104,11 +104,12 @@ class ReviewServiceTest {
     void editar_actualizaYDevuelveElIdDeLaCatedra() {
         when(reviewRepository.findById(5L)).thenReturn(Optional.of(review));
 
-        Long catedraId = reviewService.editar(5L, ana, 5, "Editado");
+        Long catedraId = reviewService.editar(5L, ana, 5, "Editado", "1C 2026");
 
         assertThat(catedraId).isEqualTo(10L);
         assertThat(review.getPuntuacion()).isEqualTo(5);
         assertThat(review.getComentario()).isEqualTo("Editado");
+        assertThat(review.getCuatrimestre()).isEqualTo("1C 2026");
         verify(reviewRepository).save(review);
     }
 
@@ -131,7 +132,7 @@ class ReviewServiceTest {
     void crear_rechazaSegundaReviewDelMismoUsuarioEnLaCatedra() {
         when(reviewRepository.existsByUsuarioIdAndCatedraId(1L, 10L)).thenReturn(true);
 
-        assertThatThrownBy(() -> reviewService.crear(10L, ana, 4, "Otra más"))
+        assertThatThrownBy(() -> reviewService.crear(10L, ana, 4, "Otra más", "1C 2026"))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("Ya dejaste");
         verify(reviewRepository, never()).save(any());
@@ -143,12 +144,13 @@ class ReviewServiceTest {
         when(catedraRepository.findById(10L)).thenReturn(Optional.of(catedra));
         when(reviewRepository.save(any(Review.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        Review creada = reviewService.crear(10L, ana, 5, "Excelente");
+        Review creada = reviewService.crear(10L, ana, 5, "Excelente", "1C 2026");
 
         assertThat(creada.getUsuario()).isSameAs(ana);
         assertThat(creada.getCatedra()).isSameAs(catedra);
         assertThat(creada.getPuntuacion()).isEqualTo(5);
         assertThat(creada.getComentario()).isEqualTo("Excelente");
+        assertThat(creada.getCuatrimestre()).isEqualTo("1C 2026");
         assertThat(creada.getFechaCreacion()).isNotNull();
     }
 
@@ -157,7 +159,7 @@ class ReviewServiceTest {
         when(reviewRepository.existsByUsuarioIdAndCatedraId(1L, 99L)).thenReturn(false);
         when(catedraRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> reviewService.crear(99L, ana, 4, "Hola"))
+        assertThatThrownBy(() -> reviewService.crear(99L, ana, 4, "Hola", "1C 2026"))
                 .isInstanceOf(NotFoundException.class);
     }
 
