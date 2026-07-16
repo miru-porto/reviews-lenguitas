@@ -20,7 +20,8 @@ pueden dejar una review por cátedra, editarla o borrarla.
 CREATE DATABASE rate_my_prof;
 ```
 
-El esquema lo genera Hibernate automáticamente al arrancar (`ddl-auto=update`).
+El esquema lo crea Flyway automáticamente al arrancar (migraciones en
+`src/main/resources/db/migration/`; Hibernate solo valida con `ddl-auto=validate`).
 
 ### 2. Configurar credenciales
 
@@ -44,9 +45,10 @@ La app arranca en `http://localhost:8080`
 
 ### 4. Datos de prueba
 
-No hace falta cargar nada a mano: el `DataSeeder` (en `config/`) carga
-materias, profesores y cátedras de ejemplo la primera vez que la app arranca
-contra una base vacía. Es idempotente: si ya hay materias, no hace nada.
+No hace falta cargar nada a mano: la migración `V2__seed.sql` carga el
+catálogo real (materias, profesores y cátedras 2026) y dos usuarios: el
+admin (DNI `99999999`) y un usuario de prueba (DNI `12345678`). Flyway
+garantiza que corre una sola vez por base.
 
 ## Estructura del proyecto
 
@@ -58,7 +60,7 @@ src/main/java/com/lenguas/ratemyprof/
 ├── controller/      # Endpoints y vistas Thymeleaf
 ├── dto/             # Entrada con validación (ReviewForm) y view models de salida
 │                    # (ReviewView, CatedraView, RatingBreakdown)
-└── config/          # Spring Security + DataSeeder
+└── config/          # Spring Security
 ```
 
 Arquitectura MVC en capas: `Controller → Service → Repository → PostgreSQL`,

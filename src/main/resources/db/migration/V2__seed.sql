@@ -1,13 +1,10 @@
 -- =====================================================================
--- Semilla del catálogo real del Profesorado de Inglés (versión SQL).
+-- V2: catálogo real del Profesorado de Inglés + usuarios iniciales.
 --
--- Es el espejo de DataSeeder.java (que siembra solo al arrancar contra
--- una base vacía): si se cambia uno hay que cambiar el otro. Esta
--- versión existe para servir de base a la migración de datos de Flyway.
---
--- Ejecutar SOLO sobre una base con las tablas creadas y vacías: si la
--- app ya arrancó contra la base vacía, el DataSeeder ya sembró esto
--- mismo y correrlo de nuevo duplicaría el catálogo.
+-- Reemplaza al viejo DataSeeder.java: esta migración es LA fuente del
+-- seed. Corre una sola vez por base (Flyway lo garantiza); en la base
+-- local pre-Flyway no corre porque el baseline arranca en la versión 2
+-- (ver application.properties).
 --
 -- Fuentes:
 --  - Materias y año de cursada: "materias y sistema de correlativas.pdf"
@@ -226,7 +223,8 @@ INSERT INTO usuarios (nombre, dni, rol, fecha_registro) VALUES
 
 -- Los INSERT usan ids explícitos: hay que avanzar las secuencias para que
 -- los próximos INSERT de la app no choquen con ids ya usados.
-SELECT setval('materias_id_seq', (SELECT MAX(id) FROM materias));
-SELECT setval('profesores_id_seq', (SELECT MAX(id) FROM profesores));
-SELECT setval('catedras_id_seq', (SELECT MAX(id) FROM catedras));
-SELECT setval('usuarios_id_seq', (SELECT MAX(id) FROM usuarios));
+-- pg_get_serial_sequence resuelve el nombre real de la secuencia identity.
+SELECT setval(pg_get_serial_sequence('materias', 'id'), (SELECT MAX(id) FROM materias));
+SELECT setval(pg_get_serial_sequence('profesores', 'id'), (SELECT MAX(id) FROM profesores));
+SELECT setval(pg_get_serial_sequence('catedras', 'id'), (SELECT MAX(id) FROM catedras));
+SELECT setval(pg_get_serial_sequence('usuarios', 'id'), (SELECT MAX(id) FROM usuarios));
