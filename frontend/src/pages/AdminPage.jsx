@@ -1,106 +1,87 @@
 import { useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import Typography from '@mui/material/Typography';
-import Tabs from '@mui/material/Tabs';
-import Tab from '@mui/material/Tab';
-import Paper from '@mui/material/Paper';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import TextField from '@mui/material/TextField';
-import MenuItem from '@mui/material/MenuItem';
-import Alert from '@mui/material/Alert';
-import Snackbar from '@mui/material/Snackbar';
-import AddIcon from '@mui/icons-material/Add';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
 import * as api from '../api/api';
 import { useApi } from '../hooks/useApi';
 import { useAuth } from '../auth/AuthContext';
 import { Cargando, ErrorMensaje, Vacio } from '../components/Estado';
+import Button from '../components/ui/Button';
+import Segmented from '../components/ui/Segmented';
+import Dialog from '../components/ui/Dialog';
+import Toast from '../components/ui/Toast';
+import { Field, Input, Select } from '../components/ui/Field';
+import { IconPlus, IconEdit, IconTrash } from '../components/ui/icons';
 
 /**
  * Pantalla de administración del catálogo (solo rol ADMIN): tres pestañas con
  * el CRUD de materias, profesores y cátedras. El chequeo de rol de acá es solo
- * UX (no mostrar una pantalla que no se puede usar); la protección real está
- * en el backend, que responde 403 a las escrituras sin rol ADMIN.
- *
- * Las tres pestañas repiten el mismo patrón que el resto de la app:
- * useApi para la lista + un diálogo para crear/editar + confirmación de
- * borrado + recargar() tras cada mutación.
+ * UX; la protección real está en el backend, que responde 403 a las escrituras
+ * sin rol ADMIN. Cada pestaña repite el patrón useApi + diálogo + confirmación
+ * de borrado + recargar() tras cada mutación.
  */
+const PESTANIAS = [
+  { value: 'materias', label: 'Materias' },
+  { value: 'profesores', label: 'Profesores' },
+  { value: 'catedras', label: 'Cátedras' },
+];
+
 export default function AdminPage() {
   const { usuario, cargando } = useAuth();
-  const [pestania, setPestania] = useState(0);
+  const [pestania, setPestania] = useState('materias');
 
-  // Hasta no saber si hay sesión (getMe inicial) no decidimos nada: si
-  // redirigiéramos ya, un admin con sesión válida rebotaría al recargar /admin.
+  // Hasta no saber si hay sesión (getMe inicial) no decidimos nada.
   if (cargando) return <Cargando />;
   if (!usuario || usuario.rol !== 'ADMIN') return <Navigate to="/" replace />;
 
   return (
     <>
-      <Typography variant="h4" gutterBottom>
-        Administración
-      </Typography>
+      <h2>Administración</h2>
+      <div style={{ margin: 'var(--space-4) 0 var(--space-6)' }}>
+        <Segmented opciones={PESTANIAS} value={pestania} onChange={setPestania} />
+      </div>
 
-      <Tabs value={pestania} onChange={(e, v) => setPestania(v)} sx={{ mb: 2 }}>
-        <Tab label="Materias" />
-        <Tab label="Profesores" />
-        <Tab label="Cátedras" />
-      </Tabs>
-
-      {pestania === 0 && <MateriasAdmin />}
-      {pestania === 1 && <ProfesoresAdmin />}
-      {pestania === 2 && <CatedrasAdmin />}
+      {pestania === 'materias' && <MateriasAdmin />}
+      {pestania === 'profesores' && <ProfesoresAdmin />}
+      {pestania === 'catedras' && <CatedrasAdmin />}
     </>
   );
 }
 
-/**
- * Diálogo de confirmación de borrado, compartido por las tres pestañas.
- * `item` es null cuando está cerrado; si no, el texto que describe lo que se borra.
- */
+/** Diálogo de confirmación de borrado, compartido por las tres pestañas. */
 function ConfirmarBorrado({ item, onConfirmar, onCerrar }) {
+  if (!item) return null;
   return (
-    <Dialog open={item !== null} onClose={onCerrar}>
-      <DialogTitle>¿Borrar {item}?</DialogTitle>
-      <DialogActions>
-        <Button onClick={onCerrar}>Cancelar</Button>
-        <Button color="error" onClick={onConfirmar}>
-          Borrar
-        </Button>
-      </DialogActions>
+    <Dialog onClose={onCerrar} labelledBy="borrar-title">
+      <div className="dialog-title" id="borrar-title">¿Borrar {item}?</div>
+      <div className="dialog-actions">
+        <Button variant="secondary" onClick={onCerrar}>Cancelar</Button>
+        <Button variant="danger" onClick={onConfirmar}>Borrar</Button>
+      </div>
     </Dialog>
   );
 }
 
-/** Aviso flotante para errores de borrado (ej: 409 "tiene cátedras asociadas"). */
-function AvisoError({ mensaje, onCerrar }) {
-  // Ojo MUI: sin ignorar 'clickaway', el mismo click que dispara la acción que
-  // abre el Snackbar puede llegarle al ClickAwayListener y cerrarlo al instante.
-  // Se cierra solo por timeout o por la cruz del Alert.
-  function onClose(evento, razon) {
-    if (razon !== 'clickaway') {
-      onCerrar();
-    }
-  }
-
+/** Barra con el botón de "agregar" alineado a la derecha. */
+function BarraAgregar({ children, onClick }) {
   return (
-    <Snackbar open={!!mensaje} autoHideDuration={5000} onClose={onClose}>
-      <Alert severity="error" onClose={onCerrar}>
-        {mensaje}
-      </Alert>
-    </Snackbar>
+    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 'var(--space-4)' }}>
+      <Button variant="primary" icon={IconPlus} onClick={onClick}>{children}</Button>
+    </div>
+  );
+}
+
+/** Botones de acción (editar/borrar) de una fila. */
+function AccionesFila({ onEditar, onBorrar }) {
+  return (
+    <span style={{ display: 'inline-flex', gap: 4, justifyContent: 'flex-end' }}>
+      {onEditar && (
+        <Button variant="ghost" className="btn-icon" aria-label="editar" onClick={onEditar}>
+          <IconEdit size={16} />
+        </Button>
+      )}
+      <Button variant="ghost" className="btn-icon" aria-label="borrar" onClick={onBorrar} style={{ color: '#e5484d' }}>
+        <IconTrash size={16} />
+      </Button>
+    </span>
   );
 }
 
@@ -109,29 +90,22 @@ function AvisoError({ mensaje, onCerrar }) {
 function MateriasAdmin() {
   const { data: materias, cargando, error, recargar } = useApi(api.getMaterias, []);
 
-  // dialogo: null (cerrado) | { id: null, nombre: '', anio: '' } (crear)
-  //          | { id, nombre, anio } (editar)
+  // dialogo: null | { id:null, nombre:'', anio:'' } (crear) | { id, nombre, anio } (editar)
   const [dialogo, setDialogo] = useState(null);
-  const [errorDialogo, setErrorDialogo] = useState(null);
-  const [aBorrar, setABorrar] = useState(null); // materia seleccionada para borrar
-  const [aviso, setAviso] = useState(null);
+  const [errorDialogo, setErrorDialogo] = useState('');
+  const [aBorrar, setABorrar] = useState(null);
+  const [aviso, setAviso] = useState('');
 
-  async function guardar() {
-    if (dialogo.anio === '') {
-      setErrorDialogo('Elegí el año de cursada');
-      return;
-    }
+  async function guardar(e) {
+    e.preventDefault();
+    if (dialogo.anio === '') return setErrorDialogo('Elegí el año de cursada');
     try {
-      if (dialogo.id === null) {
-        await api.crearMateria(dialogo.nombre, dialogo.anio);
-      } else {
-        await api.editarMateria(dialogo.id, dialogo.nombre, dialogo.anio);
-      }
+      if (dialogo.id === null) await api.crearMateria(dialogo.nombre, dialogo.anio);
+      else await api.editarMateria(dialogo.id, dialogo.nombre, dialogo.anio);
       setDialogo(null);
-      setErrorDialogo(null);
+      setErrorDialogo('');
       recargar();
     } catch (err) {
-      // 400 (nombre vacío) o 409 (duplicada): se muestra dentro del diálogo.
       setErrorDialogo(err.message);
     }
   }
@@ -152,104 +126,64 @@ function MateriasAdmin() {
 
   return (
     <>
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setDialogo({ id: null, nombre: '', anio: '' })}
-        >
-          Agregar materia
-        </Button>
-      </Box>
+      <BarraAgregar onClick={() => setDialogo({ id: null, nombre: '', anio: '' })}>Agregar materia</BarraAgregar>
 
       {materias.length === 0 ? (
         <Vacio>No hay materias cargadas.</Vacio>
       ) : (
-        <Paper>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Nombre</TableCell>
-                <TableCell>Año</TableCell>
-                <TableCell align="right">Acciones</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
+        <div className="card elev-sm" style={{ padding: 0, overflowX: 'auto' }}>
+          <table className="table">
+            <thead>
+              <tr><th>Nombre</th><th>Año</th><th>Acciones</th></tr>
+            </thead>
+            <tbody>
               {materias.map((m) => (
-                <TableRow key={m.id}>
-                  <TableCell>{m.nombre}</TableCell>
-                  <TableCell>{m.anio ?? '—'}</TableCell>
-                  <TableCell align="right">
-                    <IconButton
-                      size="small"
-                      aria-label="editar"
-                      onClick={() =>
-                        setDialogo({ id: m.id, nombre: m.nombre, anio: m.anio ?? '' })
-                      }
-                    >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      aria-label="borrar"
-                      onClick={() => setABorrar(m)}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
+                <tr key={m.id}>
+                  <td>{m.nombre}</td>
+                  <td>{m.anio ?? '—'}</td>
+                  <td>
+                    <AccionesFila
+                      onEditar={() => setDialogo({ id: m.id, nombre: m.nombre, anio: m.anio ?? '' })}
+                      onBorrar={() => setABorrar(m)}
+                    />
+                  </td>
+                </tr>
               ))}
-            </TableBody>
-          </Table>
-        </Paper>
+            </tbody>
+          </table>
+        </div>
       )}
 
-      {/* Crear / editar (el mismo diálogo: cambia el título y el endpoint). */}
-      <Dialog open={dialogo !== null} onClose={() => setDialogo(null)} fullWidth>
-        <DialogTitle>{dialogo?.id === null ? 'Nueva materia' : 'Editar materia'}</DialogTitle>
-        <DialogContent>
-          {errorDialogo && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {errorDialogo}
-            </Alert>
-          )}
-          <TextField
-            autoFocus
-            fullWidth
-            label="Nombre"
-            margin="dense"
-            value={dialogo?.nombre ?? ''}
-            onChange={(e) => setDialogo({ ...dialogo, nombre: e.target.value })}
-          />
-          <TextField
-            select
-            fullWidth
-            label="Año de cursada"
-            margin="dense"
-            value={dialogo?.anio ?? ''}
-            onChange={(e) => setDialogo({ ...dialogo, anio: e.target.value })}
-          >
-            {[1, 2, 3, 4, 5].map((a) => (
-              <MenuItem key={a} value={a}>
-                {a}°{a === 5 ? ' (plan de 5 años)' : ''}
-              </MenuItem>
-            ))}
-          </TextField>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDialogo(null)}>Cancelar</Button>
-          <Button variant="contained" onClick={guardar}>
-            Guardar
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {dialogo && (
+        <Dialog onClose={() => setDialogo(null)} labelledBy="mat-title">
+          <form onSubmit={guardar} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+            <div className="dialog-title" id="mat-title">{dialogo.id === null ? 'Nueva materia' : 'Editar materia'}</div>
+            {errorDialogo && <div className="alert alert-error">{errorDialogo}</div>}
+            <Field label="Nombre" htmlFor="mat-nombre">
+              <Input id="mat-nombre" autoFocus value={dialogo.nombre} onChange={(e) => setDialogo({ ...dialogo, nombre: e.target.value })} />
+            </Field>
+            <Field label="Año de cursada" htmlFor="mat-anio">
+              <Select
+                id="mat-anio"
+                value={dialogo.anio}
+                onChange={(e) => setDialogo({ ...dialogo, anio: e.target.value === '' ? '' : Number(e.target.value) })}
+                placeholder="Elegí el año"
+              >
+                {[1, 2, 3, 4, 5].map((a) => (
+                  <option key={a} value={a}>{a}°{a === 5 ? ' (plan de 5 años)' : ''}</option>
+                ))}
+              </Select>
+            </Field>
+            <div className="dialog-actions">
+              <Button variant="secondary" onClick={() => setDialogo(null)}>Cancelar</Button>
+              <Button variant="primary" type="submit">Guardar</Button>
+            </div>
+          </form>
+        </Dialog>
+      )}
 
-      <ConfirmarBorrado
-        item={aBorrar ? `la materia "${aBorrar.nombre}"` : null}
-        onConfirmar={borrar}
-        onCerrar={() => setABorrar(null)}
-      />
-      <AvisoError mensaje={aviso} onCerrar={() => setAviso(null)} />
+      <ConfirmarBorrado item={aBorrar ? `la materia "${aBorrar.nombre}"` : null} onConfirmar={borrar} onCerrar={() => setABorrar(null)} />
+      <Toast mensaje={aviso} onCerrar={() => setAviso('')} />
     </>
   );
 }
@@ -260,19 +194,17 @@ function ProfesoresAdmin() {
   const { data: profesores, cargando, error, recargar } = useApi(api.getProfesores, []);
 
   const [dialogo, setDialogo] = useState(null); // { id, nombre, apellido }
-  const [errorDialogo, setErrorDialogo] = useState(null);
+  const [errorDialogo, setErrorDialogo] = useState('');
   const [aBorrar, setABorrar] = useState(null);
-  const [aviso, setAviso] = useState(null);
+  const [aviso, setAviso] = useState('');
 
-  async function guardar() {
+  async function guardar(e) {
+    e.preventDefault();
     try {
-      if (dialogo.id === null) {
-        await api.crearProfesor(dialogo.nombre, dialogo.apellido);
-      } else {
-        await api.editarProfesor(dialogo.id, dialogo.nombre, dialogo.apellido);
-      }
+      if (dialogo.id === null) await api.crearProfesor(dialogo.nombre, dialogo.apellido);
+      else await api.editarProfesor(dialogo.id, dialogo.nombre, dialogo.apellido);
       setDialogo(null);
-      setErrorDialogo(null);
+      setErrorDialogo('');
       recargar();
     } catch (err) {
       setErrorDialogo(err.message);
@@ -295,97 +227,56 @@ function ProfesoresAdmin() {
 
   return (
     <>
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setDialogo({ id: null, nombre: '', apellido: '' })}
-        >
-          Agregar profesor
-        </Button>
-      </Box>
+      <BarraAgregar onClick={() => setDialogo({ id: null, nombre: '', apellido: '' })}>Agregar profesor</BarraAgregar>
 
       {profesores.length === 0 ? (
         <Vacio>No hay profesores cargados.</Vacio>
       ) : (
-        <Paper>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Apellido</TableCell>
-                <TableCell>Nombre</TableCell>
-                <TableCell align="right">Acciones</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
+        <div className="card elev-sm" style={{ padding: 0, overflowX: 'auto' }}>
+          <table className="table">
+            <thead>
+              <tr><th>Apellido</th><th>Nombre</th><th>Acciones</th></tr>
+            </thead>
+            <tbody>
               {profesores.map((p) => (
-                <TableRow key={p.id}>
-                  <TableCell>{p.apellido}</TableCell>
-                  <TableCell>{p.nombre}</TableCell>
-                  <TableCell align="right">
-                    <IconButton
-                      size="small"
-                      aria-label="editar"
-                      onClick={() =>
-                        setDialogo({ id: p.id, nombre: p.nombre, apellido: p.apellido })
-                      }
-                    >
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      aria-label="borrar"
-                      onClick={() => setABorrar(p)}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
+                <tr key={p.id}>
+                  <td>{p.apellido}</td>
+                  <td>{p.nombre || '—'}</td>
+                  <td>
+                    <AccionesFila
+                      onEditar={() => setDialogo({ id: p.id, nombre: p.nombre, apellido: p.apellido })}
+                      onBorrar={() => setABorrar(p)}
+                    />
+                  </td>
+                </tr>
               ))}
-            </TableBody>
-          </Table>
-        </Paper>
+            </tbody>
+          </table>
+        </div>
       )}
 
-      <Dialog open={dialogo !== null} onClose={() => setDialogo(null)} fullWidth>
-        <DialogTitle>{dialogo?.id === null ? 'Nuevo profesor' : 'Editar profesor'}</DialogTitle>
-        <DialogContent>
-          {errorDialogo && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {errorDialogo}
-            </Alert>
-          )}
-          <TextField
-            autoFocus
-            fullWidth
-            label="Apellido"
-            margin="dense"
-            value={dialogo?.apellido ?? ''}
-            onChange={(e) => setDialogo({ ...dialogo, apellido: e.target.value })}
-          />
-          {/* Los horarios solo publican apellidos: el nombre puede no saberse. */}
-          <TextField
-            fullWidth
-            label="Nombre (opcional)"
-            margin="dense"
-            value={dialogo?.nombre ?? ''}
-            onChange={(e) => setDialogo({ ...dialogo, nombre: e.target.value })}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDialogo(null)}>Cancelar</Button>
-          <Button variant="contained" onClick={guardar}>
-            Guardar
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {dialogo && (
+        <Dialog onClose={() => setDialogo(null)} labelledBy="prof-title">
+          <form onSubmit={guardar} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+            <div className="dialog-title" id="prof-title">{dialogo.id === null ? 'Nuevo profesor' : 'Editar profesor'}</div>
+            {errorDialogo && <div className="alert alert-error">{errorDialogo}</div>}
+            <Field label="Apellido" htmlFor="prof-apellido">
+              <Input id="prof-apellido" autoFocus value={dialogo.apellido} onChange={(e) => setDialogo({ ...dialogo, apellido: e.target.value })} />
+            </Field>
+            {/* Los horarios solo publican apellidos: el nombre puede no saberse. */}
+            <Field label="Nombre (opcional)" htmlFor="prof-nombre">
+              <Input id="prof-nombre" value={dialogo.nombre} onChange={(e) => setDialogo({ ...dialogo, nombre: e.target.value })} />
+            </Field>
+            <div className="dialog-actions">
+              <Button variant="secondary" onClick={() => setDialogo(null)}>Cancelar</Button>
+              <Button variant="primary" type="submit">Guardar</Button>
+            </div>
+          </form>
+        </Dialog>
+      )}
 
-      <ConfirmarBorrado
-        item={aBorrar ? `a ${`${aBorrar.nombre} ${aBorrar.apellido}`.trim()}` : null}
-        onConfirmar={borrar}
-        onCerrar={() => setABorrar(null)}
-      />
-      <AvisoError mensaje={aviso} onCerrar={() => setAviso(null)} />
+      <ConfirmarBorrado item={aBorrar ? `a ${`${aBorrar.nombre} ${aBorrar.apellido}`.trim()}` : null} onConfirmar={borrar} onCerrar={() => setABorrar(null)} />
+      <Toast mensaje={aviso} onCerrar={() => setAviso('')} />
     </>
   );
 }
@@ -394,27 +285,23 @@ function ProfesoresAdmin() {
 
 function CatedrasAdmin() {
   const { data: catedras, cargando, error, recargar } = useApi(api.getCatedras, []);
-  // Para los selects del alta: la cátedra se crea eligiendo profesor y materia.
   const { data: materias } = useApi(api.getMaterias, []);
   const { data: profesores } = useApi(api.getProfesores, []);
 
-  const [dialogo, setDialogo] = useState(null); // { profesorId: '', materiaId: '' }
-  const [errorDialogo, setErrorDialogo] = useState(null);
+  const [dialogo, setDialogo] = useState(null); // { profesorId:'', materiaId:'' }
+  const [errorDialogo, setErrorDialogo] = useState('');
   const [aBorrar, setABorrar] = useState(null);
-  const [aviso, setAviso] = useState(null);
+  const [aviso, setAviso] = useState('');
 
-  async function guardar() {
-    if (dialogo.profesorId === '' || dialogo.materiaId === '') {
-      setErrorDialogo('Elegí un profesor y una materia');
-      return;
-    }
+  async function guardar(e) {
+    e.preventDefault();
+    if (dialogo.profesorId === '' || dialogo.materiaId === '') return setErrorDialogo('Elegí un profesor y una materia');
     try {
       await api.crearCatedra(dialogo.profesorId, dialogo.materiaId);
       setDialogo(null);
-      setErrorDialogo(null);
+      setErrorDialogo('');
       recargar();
     } catch (err) {
-      // 409: ese profesor ya tiene cátedra en esa materia.
       setErrorDialogo(err.message);
     }
   }
@@ -424,7 +311,6 @@ function CatedrasAdmin() {
       await api.borrarCatedra(aBorrar.catedraId);
       recargar();
     } catch (err) {
-      // 409: la cátedra tiene reviews; no se borra en cascada.
       setAviso(err.message);
     } finally {
       setABorrar(null);
@@ -436,111 +322,75 @@ function CatedrasAdmin() {
 
   return (
     <>
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => setDialogo({ profesorId: '', materiaId: '' })}
-        >
-          Agregar cátedra
-        </Button>
-      </Box>
+      <BarraAgregar onClick={() => setDialogo({ profesorId: '', materiaId: '' })}>Agregar cátedra</BarraAgregar>
 
       {catedras.length === 0 ? (
         <Vacio>No hay cátedras cargadas.</Vacio>
       ) : (
-        <Paper>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Materia</TableCell>
-                <TableCell>Profesor</TableCell>
-                <TableCell align="right">Acciones</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
+        <div className="card elev-sm" style={{ padding: 0, overflowX: 'auto' }}>
+          <table className="table">
+            <thead>
+              <tr><th>Materia</th><th>Profesor</th><th>Acciones</th></tr>
+            </thead>
+            <tbody>
               {catedras.map((c) => (
-                <TableRow key={c.catedraId}>
-                  <TableCell>{c.materiaNombre}</TableCell>
-                  <TableCell>
-                    {/* La coma solo si el nombre se conoce (suele estar vacío). */}
-                    {c.nombreProfesor
-                      ? `${c.apellidoProfesor}, ${c.nombreProfesor}`
-                      : c.apellidoProfesor}
-                  </TableCell>
-                  <TableCell align="right">
-                    {/* Sin editar: una cátedra ES el par profesor+materia; cambiarlo
-                        es borrar esta y crear otra. */}
-                    <IconButton
-                      size="small"
-                      aria-label="borrar"
-                      onClick={() => setABorrar(c)}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
+                <tr key={c.catedraId}>
+                  <td>{c.materiaNombre}</td>
+                  <td>{c.nombreProfesor ? `${c.apellidoProfesor}, ${c.nombreProfesor}` : c.apellidoProfesor}</td>
+                  <td>
+                    {/* Sin editar: una cátedra ES el par profesor+materia. */}
+                    <AccionesFila onBorrar={() => setABorrar(c)} />
+                  </td>
+                </tr>
               ))}
-            </TableBody>
-          </Table>
-        </Paper>
+            </tbody>
+          </table>
+        </div>
       )}
 
-      <Dialog open={dialogo !== null} onClose={() => setDialogo(null)} fullWidth>
-        <DialogTitle>Nueva cátedra</DialogTitle>
-        <DialogContent>
-          {errorDialogo && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {errorDialogo}
-            </Alert>
-          )}
-          <TextField
-            select
-            fullWidth
-            label="Profesor"
-            margin="dense"
-            value={dialogo?.profesorId ?? ''}
-            onChange={(e) => setDialogo({ ...dialogo, profesorId: e.target.value })}
-          >
-            {(profesores ?? []).map((p) => (
-              <MenuItem key={p.id} value={p.id}>
-                {p.nombre ? `${p.apellido}, ${p.nombre}` : p.apellido}
-              </MenuItem>
-            ))}
-          </TextField>
-          <TextField
-            select
-            fullWidth
-            label="Materia"
-            margin="dense"
-            value={dialogo?.materiaId ?? ''}
-            onChange={(e) => setDialogo({ ...dialogo, materiaId: e.target.value })}
-          >
-            {(materias ?? []).map((m) => (
-              <MenuItem key={m.id} value={m.id}>
-                {m.nombre}
-              </MenuItem>
-            ))}
-          </TextField>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDialogo(null)}>Cancelar</Button>
-          <Button variant="contained" onClick={guardar}>
-            Guardar
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {dialogo && (
+        <Dialog onClose={() => setDialogo(null)} labelledBy="cat-title">
+          <form onSubmit={guardar} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+            <div className="dialog-title" id="cat-title">Nueva cátedra</div>
+            {errorDialogo && <div className="alert alert-error">{errorDialogo}</div>}
+            <Field label="Profesor" htmlFor="cat-profe">
+              <Select
+                id="cat-profe"
+                value={dialogo.profesorId}
+                onChange={(e) => setDialogo({ ...dialogo, profesorId: e.target.value === '' ? '' : Number(e.target.value) })}
+                placeholder="Elegí un profesor"
+              >
+                {(profesores ?? []).map((p) => (
+                  <option key={p.id} value={p.id}>{p.nombre ? `${p.apellido}, ${p.nombre}` : p.apellido}</option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="Materia" htmlFor="cat-materia">
+              <Select
+                id="cat-materia"
+                value={dialogo.materiaId}
+                onChange={(e) => setDialogo({ ...dialogo, materiaId: e.target.value === '' ? '' : Number(e.target.value) })}
+                placeholder="Elegí una materia"
+              >
+                {(materias ?? []).map((m) => (
+                  <option key={m.id} value={m.id}>{m.nombre}</option>
+                ))}
+              </Select>
+            </Field>
+            <div className="dialog-actions">
+              <Button variant="secondary" onClick={() => setDialogo(null)}>Cancelar</Button>
+              <Button variant="primary" type="submit">Guardar</Button>
+            </div>
+          </form>
+        </Dialog>
+      )}
 
       <ConfirmarBorrado
-        item={
-          aBorrar
-            ? `la cátedra de ${aBorrar.apellidoProfesor} en ${aBorrar.materiaNombre}`
-            : null
-        }
+        item={aBorrar ? `la cátedra de ${aBorrar.apellidoProfesor} en ${aBorrar.materiaNombre}` : null}
         onConfirmar={borrar}
         onCerrar={() => setABorrar(null)}
       />
-      <AvisoError mensaje={aviso} onCerrar={() => setAviso(null)} />
+      <Toast mensaje={aviso} onCerrar={() => setAviso('')} />
     </>
   );
 }

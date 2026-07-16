@@ -4,12 +4,12 @@ import com.lenguas.ratemyprof.dto.MateriaRequest;
 import com.lenguas.ratemyprof.dto.MateriaView;
 import com.lenguas.ratemyprof.exception.NotFoundException;
 import com.lenguas.ratemyprof.model.CatedraConRating;
+import com.lenguas.ratemyprof.model.MateriaConStats;
 import com.lenguas.ratemyprof.repository.MateriaRepository;
 import com.lenguas.ratemyprof.service.AdminService;
 import com.lenguas.ratemyprof.service.CatedraService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -42,14 +42,14 @@ public class MateriaApiController {
     private final AdminService adminService;
 
     /**
-     * Todas las materias, ordenadas por año de cursada y nombre (las sin año
-     * quedan al final). Se mapea a DTO: la entidad expone relaciones LAZY.
+     * Todas las materias con rating, cátedras y reviews, ordenadas por año de
+     * cursada y nombre (las sin año quedan al final). Los agregados salen de
+     * la misma query: la portada los muestra en cada card y suma los totales
+     * de la cabecera a partir de esta lista.
      */
     @GetMapping
-    public List<MateriaView> listar() {
-        return materiaRepository.findAll(Sort.by("anio", "nombre")).stream()
-                .map(m -> new MateriaView(m.getId(), m.getNombre(), m.getAnio()))
-                .toList();
+    public List<MateriaConStats> listar() {
+        return materiaRepository.findAllConStats();
     }
 
     /**

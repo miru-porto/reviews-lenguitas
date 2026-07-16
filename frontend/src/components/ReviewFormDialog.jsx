@@ -1,18 +1,10 @@
 import { useState } from 'react';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import Rating from '@mui/material/Rating';
-import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
-import Alert from '@mui/material/Alert';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
 import { crearReview, editarReview } from '../api/api';
 import { opcionesCuatrimestre } from '../utils/cuatrimestres';
+import Dialog from './ui/Dialog';
+import Button from './ui/Button';
+import { Field, Select, Textarea } from './ui/Field';
+import { StarsInput } from './ui/Stars';
 
 const MAX_COMENTARIO = 2000;
 
@@ -22,24 +14,11 @@ const MAX_COMENTARIO = 2000;
  *  - 'crear': arranca vacío y hace POST /api/reviews con la catedraId.
  *  - 'editar': viene precargado con la review y hace PUT /api/reviews/{id}.
  *
- * Al guardar con éxito llama a onGuardado() (la pantalla recarga la lista) y cierra.
- * Los errores del backend (400 validación, 409 review duplicada, 403/404) se
- * muestran en un Alert dentro del diálogo, sin cerrarlo, para poder corregir.
- *
- * Props:
- *  - open, onClose, onGuardado
- *  - modo: 'crear' | 'editar'
- *  - catedraId: requerido en modo 'crear'
- *  - review: { id, puntuacion, comentario, cuatrimestre } requerido en modo 'editar'
+ * Al guardar con éxito llama a onGuardado() (la pantalla recarga la lista) y
+ * cierra. Los errores del backend (400 validación, 409 duplicada, 403/404) se
+ * muestran en un alert dentro del diálogo, sin cerrarlo, para poder corregir.
  */
-export default function ReviewFormDialog({
-  open,
-  onClose,
-  onGuardado,
-  modo,
-  catedraId,
-  review,
-}) {
+export default function ReviewFormDialog({ onClose, onGuardado, modo, catedraId, review }) {
   const esEditar = modo === 'editar';
 
   const [puntuacion, setPuntuacion] = useState(esEditar ? review.puntuacion : 0);
@@ -54,20 +33,10 @@ export default function ReviewFormDialog({
     e.preventDefault();
     setError('');
 
-    // Validación local, en espejo de las constraints del backend, para dar el
-    // mensaje sin ir al server.
-    if (!puntuacion) {
-      setError('Elegí una puntuación.');
-      return;
-    }
-    if (!cuatrimestre) {
-      setError('Elegí el cuatrimestre que cursaste.');
-      return;
-    }
-    if (comentario.trim() === '') {
-      setError('El comentario no puede estar vacío.');
-      return;
-    }
+    // Validación local, en espejo de las constraints del backend.
+    if (!puntuacion) return setError('Elegí una puntuación.');
+    if (!cuatrimestre) return setError('Elegí el cuatrimestre que cursaste.');
+    if (comentario.trim() === '') return setError('El comentario no puede estar vacío.');
 
     setEnviando(true);
     try {
@@ -86,75 +55,53 @@ export default function ReviewFormDialog({
   }
 
   return (
-    <Dialog open={open} onClose={enviando ? undefined : onClose} fullWidth maxWidth="sm">
-      <Box component="form" onSubmit={guardar}>
-        <DialogTitle>{esEditar ? 'Editar review' : 'Escribir una review'}</DialogTitle>
-        <DialogContent>
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
+    <Dialog onClose={enviando ? undefined : onClose} labelledBy="review-form-title">
+      <form onSubmit={guardar} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+        <div className="dialog-title" id="review-form-title">
+          {esEditar ? 'Editar review' : 'Escribir una review'}
+        </div>
 
-          <Typography component="legend" sx={{ mb: 0.5 }}>
-            Puntuación
-          </Typography>
-          <Rating
-            value={puntuacion}
-            onChange={(e, valor) => setPuntuacion(valor ?? 0)}
-            sx={{ mb: 2 }}
-          />
+        {error && <div className="alert alert-error">{error}</div>}
 
-          <Typography component="legend" sx={{ mb: 0.5 }}>
-            Cuatrimestre cursado
-          </Typography>
+        <Field label="Tu puntuación">
+          <StarsInput valor={puntuacion} onChange={setPuntuacion} />
+        </Field>
+
+        <Field label="Cuatrimestre cursado" htmlFor="cuatri">
           <Select
+            id="cuatri"
             value={cuatrimestre}
             onChange={(e) => setCuatrimestre(e.target.value)}
-            fullWidth
-            // Select no tiene placeholder nativo: displayEmpty hace que con valor
-            // vacío se llame igual a renderValue, y ahí mostramos el texto gris.
-            displayEmpty
-            renderValue={(valor) =>
-              valor || (
-                <Typography component="span" color="text.secondary">
-                  Seleccioná el cuatrimestre
-                </Typography>
-              )
-            }
-            // Son ~18 opciones (desde 1C 2018): limitamos el alto del menú para
-            // que no ocupe toda la pantalla y se scrollee como una lista.
-            MenuProps={{ slotProps: { paper: { sx: { maxHeight: 320 } } } }}
-            sx={{ mb: 2 }}
+            placeholder="Seleccioná el cuatrimestre"
           >
             {opcionesCuatrimestre().map((c) => (
-              <MenuItem key={c} value={c}>
-                {c}
-              </MenuItem>
+              <option key={c} value={c}>{c}</option>
             ))}
           </Select>
+        </Field>
 
-          <TextField
-            label="Comentario"
+        <Field label="Comentario" htmlFor="comentario">
+          <Textarea
+            id="comentario"
             value={comentario}
             onChange={(e) => setComentario(e.target.value)}
-            multiline
-            minRows={4}
-            fullWidth
+            rows={4}
+            maxLength={MAX_COMENTARIO}
             autoFocus
-            slotProps={{ htmlInput: { maxLength: MAX_COMENTARIO } }}
-            helperText={`${comentario.length}/${MAX_COMENTARIO}`}
+            placeholder="Contá cómo fue cursarla: exigencia, correcciones, clases…"
           />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={onClose} disabled={enviando}>
-            Cancelar
-          </Button>
-          <Button type="submit" variant="contained" disabled={enviando}>
+          <div className="text-muted" style={{ fontSize: 11, marginTop: 4, textAlign: 'right' }}>
+            {comentario.length} / {MAX_COMENTARIO}
+          </div>
+        </Field>
+
+        <div className="dialog-actions">
+          <Button variant="secondary" onClick={onClose} disabled={enviando}>Cancelar</Button>
+          <Button variant="primary" type="submit" disabled={enviando}>
             {esEditar ? 'Guardar cambios' : 'Publicar'}
           </Button>
-        </DialogActions>
-      </Box>
+        </div>
+      </form>
     </Dialog>
   );
 }

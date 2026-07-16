@@ -1,28 +1,26 @@
 import { useState } from 'react';
 import { Outlet, Link as RouterLink, useNavigate } from 'react-router-dom';
-import AppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
-import Container from '@mui/material/Container';
-import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
-import InputBase from '@mui/material/InputBase';
-import { alpha } from '@mui/material/styles';
-import SearchIcon from '@mui/icons-material/Search';
-import SchoolIcon from '@mui/icons-material/School';
 import { useAuth } from '../auth/AuthContext';
+import { useTheme } from '../theme/ThemeContext';
+import Button from './ui/Button';
+import Cafecito from './ui/Cafecito';
+import { IconSearch, IconSun, IconMoon, IconMenu } from './ui/icons';
 
 /**
- * Marco común de todas las pantallas: barra superior con el título (link al
- * inicio) y un buscador. El contenido de cada ruta se pinta donde va <Outlet />
- * (react-router lo reemplaza según la URL).
+ * Marco común de todas las pantallas: barra superior sticky con la marca (link
+ * al inicio), buscador, toggle de tema y sesión. En mobile el nav se compacta:
+ * el buscador pasa a una fila propia full-width y las acciones de cuenta se
+ * esconden en un menú hamburguesa. El contenido de cada ruta va en <Outlet />.
  */
 export default function Layout() {
   const navigate = useNavigate();
   const { usuario, cargando, logout } = useAuth();
+  const { tema, toggle } = useTheme();
   const [texto, setTexto] = useState('');
+  const [menuAbierto, setMenuAbierto] = useState(false);
 
   async function onLogout() {
+    setMenuAbierto(false);
     await logout();
     navigate('/');
   }
@@ -32,76 +30,107 @@ export default function Layout() {
   function onSubmit(e) {
     e.preventDefault();
     const q = texto.trim();
-    if (q) {
-      navigate(`/buscar?q=${encodeURIComponent(q)}`);
-    }
+    if (q) navigate(`/buscar?q=${encodeURIComponent(q)}`);
   }
 
   return (
-    <Box sx={{ minHeight: '100vh' }}>
-      <AppBar position="static">
-        <Toolbar>
-          <SchoolIcon sx={{ mr: 1 }} />
-          <Typography
-            variant="h6"
-            component={RouterLink}
-            to="/"
-            sx={{ color: 'inherit', textDecoration: 'none', flexGrow: 1 }}
-          >
-            Rate My Prof · Lenguas Vivas
-          </Typography>
+    <div style={{ minHeight: '100vh' }}>
+      <header className="nav">
+        <RouterLink
+          to="/"
+          style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', color: 'inherit', marginRight: 'auto' }}
+        >
+          <span className="brand-logo">LV</span>
+          <span className="nav-brand">
+            Rate My Prof<span style={{ color: 'var(--color-accent)' }}> LV</span>
+            <span className="brand-sub" style={{ fontFamily: 'var(--font-body)', fontSize: 11, letterSpacing: '.04em', color: 'color-mix(in srgb,var(--color-text) 55%, transparent)' }}>
+              Profesorado de Inglés · Lenguas Vivas
+            </span>
+          </span>
+        </RouterLink>
 
-          <Box
-            component="form"
-            onSubmit={onSubmit}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              borderRadius: 1,
-              bgcolor: (t) => alpha(t.palette.common.white, 0.15),
-              '&:hover': { bgcolor: (t) => alpha(t.palette.common.white, 0.25) },
-              px: 1,
-            }}
-          >
-            <SearchIcon fontSize="small" />
-            <InputBase
-              placeholder="Buscar materia o profesor…"
-              value={texto}
-              onChange={(e) => setTexto(e.target.value)}
-              sx={{ color: 'inherit', ml: 1, width: { xs: 120, sm: 220 } }}
-            />
-          </Box>
+        <form
+          onSubmit={onSubmit}
+          className="input nav-search"
+          style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 10px' }}
+        >
+          <IconSearch size={16} />
+          <input
+            value={texto}
+            onChange={(e) => setTexto(e.target.value)}
+            placeholder="Buscar materia o profe…"
+            aria-label="Buscar"
+            style={{ border: 0, background: 'transparent', color: 'inherit', outline: 'none', width: '100%', fontSize: 14 }}
+          />
+        </form>
 
-          {/* Sesión: mientras carga (getMe inicial) no mostramos nada para no
-              parpadear "Ingresar" y cambiar a "Salir" un instante después. */}
-          {!cargando &&
-            (usuario ? (
-              <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
-                {/* Ocultar el link no protege nada (la protección es del backend);
-                    solo evita mostrar una sección que un usuario común no puede usar. */}
+        <Button
+          variant="secondary"
+          className="btn-icon"
+          onClick={toggle}
+          aria-label="Cambiar tono claro/oscuro"
+          title="Cambiar tono claro/oscuro"
+        >
+          {tema === 'dark' ? <IconSun /> : <IconMoon />}
+        </Button>
+
+        {/* Acciones de cuenta — visibles en desktop. Mientras carga (getMe
+            inicial) no mostramos nada para no parpadear "Ingresar"/"Salir". */}
+        {!cargando && (
+          <div className="acciones-desktop" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+            {usuario ? (
+              <>
                 {usuario.rol === 'ADMIN' && (
-                  <Button color="inherit" component={RouterLink} to="/admin">
-                    Admin
-                  </Button>
+                  <Button as={RouterLink} to="/admin" variant="ghost">Admin</Button>
                 )}
-                <Typography sx={{ mr: 1, display: { xs: 'none', sm: 'block' } }}>
-                  {usuario.nombre}
-                </Typography>
-                <Button color="inherit" onClick={onLogout}>
-                  Salir
-                </Button>
-              </Box>
+                <span className="text-muted" style={{ fontSize: 14 }}>{usuario.nombre}</span>
+                <Button variant="secondary" onClick={onLogout}>Salir</Button>
+              </>
             ) : (
-              <Button color="inherit" component={RouterLink} to="/login" sx={{ ml: 2 }}>
-                Ingresar
-              </Button>
-            ))}
-        </Toolbar>
-      </AppBar>
+              <Button as={RouterLink} to="/login" variant="primary">Ingresar</Button>
+            )}
+          </div>
+        )}
 
-      <Container maxWidth="md" sx={{ py: 4 }}>
+        {/* Hamburguesa — solo mobile. */}
+        <Button
+          variant="secondary"
+          className="btn-icon menu-mobile-btn"
+          onClick={() => setMenuAbierto((v) => !v)}
+          aria-label="Menú"
+          aria-expanded={menuAbierto}
+        >
+          <IconMenu />
+        </Button>
+
+        {/* Menú desplegable de cuenta (mobile). */}
+        {menuAbierto && (
+          <>
+            <div className="menu-overlay" onClick={() => setMenuAbierto(false)} />
+            <div className="menu-mobile elev-lg">
+              {!cargando && usuario ? (
+                <>
+                  <div className="text-muted" style={{ fontSize: 12, padding: '2px 4px 6px' }}>
+                    Hola, {usuario.nombre}
+                  </div>
+                  {usuario.rol === 'ADMIN' && (
+                    <RouterLink to="/admin" className="menu-item" onClick={() => setMenuAbierto(false)}>Admin</RouterLink>
+                  )}
+                  <button type="button" className="menu-item" onClick={onLogout}>Salir</button>
+                </>
+              ) : (
+                <RouterLink to="/login" className="menu-item" onClick={() => setMenuAbierto(false)}>Ingresar</RouterLink>
+              )}
+            </div>
+          </>
+        )}
+      </header>
+
+      <main className="container">
         <Outlet />
-      </Container>
-    </Box>
+      </main>
+
+      <Cafecito />
+    </div>
   );
 }

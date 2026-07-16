@@ -1,15 +1,11 @@
 import { useParams, Link as RouterLink } from 'react-router-dom';
-import Typography from '@mui/material/Typography';
-import Card from '@mui/material/Card';
-import CardActionArea from '@mui/material/CardActionArea';
-import CardContent from '@mui/material/CardContent';
-import Stack from '@mui/material/Stack';
-import Button from '@mui/material/Button';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { getCatedrasDeMateria } from '../api/api';
 import { useApi } from '../hooks/useApi';
 import { Cargando, ErrorMensaje, Vacio } from '../components/Estado';
 import RatingEstrellas from '../components/RatingEstrellas';
+import Button from '../components/ui/Button';
+import Avatar from '../components/ui/Avatar';
+import { IconArrowLeft } from '../components/ui/icons';
 
 /**
  * Cátedras de una materia, cada una con su promedio de rating, en cards que
@@ -28,48 +24,43 @@ export default function CatedrasPage() {
   if (cargando) return <Cargando />;
   if (error) return <ErrorMensaje error={error} />;
 
-  // El nombre de la materia viene dentro de cada cátedra; si no hay cátedras,
-  // usamos un título genérico.
   const nombreMateria = catedras[0]?.nombreMateria ?? 'Materia';
 
   return (
     <>
-      <Button
-        component={RouterLink}
-        to="/materias"
-        startIcon={<ArrowBackIcon />}
-        sx={{ mb: 2 }}
-      >
+      <Button as={RouterLink} to="/materias" variant="ghost" icon={IconArrowLeft} style={{ marginBottom: 'var(--space-4)' }}>
         Materias
       </Button>
 
-      <Typography variant="h4" gutterBottom>
-        {nombreMateria}
-      </Typography>
+      <h2 style={{ fontSize: 34 }}>{nombreMateria}</h2>
+      <p className="text-muted" style={{ marginBottom: 'var(--space-6)' }}>
+        {catedras.length} {catedras.length === 1 ? 'cátedra' : 'cátedras'} · elegí una para ver sus reviews.
+      </p>
 
       {catedras.length === 0 ? (
         <Vacio>Esta materia todavía no tiene cátedras.</Vacio>
       ) : (
-        <Stack spacing={2}>
-          {catedras.map((c) => (
-            <Card key={c.catedraId}>
-              <CardActionArea
-                component={RouterLink}
-                to={`/catedras/${c.catedraId}`}
-              >
-                <CardContent>
-                  <Typography variant="h6">
-                    {c.nombreProfesor} {c.apellidoProfesor}
-                  </Typography>
-                  <RatingEstrellas
-                    promedio={c.promedioRating}
-                    total={c.cantidadReviews}
-                  />
-                </CardContent>
-              </CardActionArea>
-            </Card>
-          ))}
-        </Stack>
+        <div className="prof-grid">
+          {catedras.map((c) => {
+            const nombreCompleto = `${c.nombreProfesor} ${c.apellidoProfesor}`.trim();
+            const tieneReviews = c.cantidadReviews > 0;
+            return (
+              <RouterLink key={c.catedraId} to={`/catedras/${c.catedraId}`} className="card card-hover elev-sm" style={{ gap: 'var(--space-3)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                  <Avatar nombre={c.apellidoProfesor} size={48} variant={tieneReviews ? 'accent' : 'neutral'} />
+                  <span className="card-title" style={{ fontSize: 19 }}>{nombreCompleto}</span>
+                </div>
+                {tieneReviews ? (
+                  <RatingEstrellas promedio={c.promedioRating} total={c.cantidadReviews} />
+                ) : (
+                  <span className="text-muted" style={{ fontSize: 12 }}>
+                    Todavía nadie la reseñó · sé la primera
+                  </span>
+                )}
+              </RouterLink>
+            );
+          })}
+        </div>
       )}
     </>
   );

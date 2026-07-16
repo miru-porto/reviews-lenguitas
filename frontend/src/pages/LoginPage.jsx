@@ -1,20 +1,15 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Paper from '@mui/material/Paper';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
-import Alert from '@mui/material/Alert';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useAuth } from '../auth/AuthContext';
+import Button from '../components/ui/Button';
+import { Field, Input } from '../components/ui/Field';
+import { IconArrowLeft } from '../components/ui/icons';
 
 /**
  * Ingreso por DNI, en dos pasos:
  *  1. "dni": se pide el DNI. Si ya está registrado, entra directo.
  *  2. "registro": si el DNI no existía (la API respondió 404), se muestra este
- *     paso para elegir un nombre (nick) y crear la cuenta. Tiene "volver" por si
- *     el DNI estaba mal tipeado.
+ *     paso para elegir un nombre (nick) y crear la cuenta.
  */
 export default function LoginPage() {
   const { login, registro } = useAuth();
@@ -29,24 +24,18 @@ export default function LoginPage() {
   async function ingresar(e) {
     e.preventDefault();
     setError('');
-
-    // Validación local para dar un mensaje preciso sin ida y vuelta al server.
     if (!/^\d{7,8}$/.test(dni.trim())) {
       setError('El DNI debe tener 7 u 8 dígitos.');
       return;
     }
-
     setEnviando(true);
     try {
       await login(dni.trim());
       navigate('/');
     } catch (err) {
       // 404 = DNI no registrado → pasamos al alta con el mismo DNI.
-      if (err.status === 404) {
-        setPaso('registro');
-      } else {
-        setError(err.message);
-      }
+      if (err.status === 404) setPaso('registro');
+      else setError(err.message);
     } finally {
       setEnviando(false);
     }
@@ -55,12 +44,10 @@ export default function LoginPage() {
   async function crearCuenta(e) {
     e.preventDefault();
     setError('');
-
     if (nombre.trim() === '') {
       setError('Ingresá un nombre.');
       return;
     }
-
     setEnviando(true);
     try {
       await registro(dni.trim(), nombre.trim());
@@ -79,74 +66,52 @@ export default function LoginPage() {
   }
 
   return (
-    <Paper sx={{ maxWidth: 420, mx: 'auto', mt: 4, p: 4 }}>
+    <div className="card elev-sm" style={{ maxWidth: 420, margin: 'var(--space-8) auto', padding: 'var(--space-8)', gap: 'var(--space-4)' }}>
       {paso === 'dni' ? (
-        <Box component="form" onSubmit={ingresar}>
-          <Typography variant="h5" gutterBottom>
-            Ingresar
-          </Typography>
-          <Typography color="text.secondary" sx={{ mb: 3 }}>
-            Ingresá tu DNI para entrar o crear tu cuenta.
-          </Typography>
+        <form onSubmit={ingresar} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+          <div>
+            <h3 style={{ marginBottom: 'var(--space-1)' }}>Ingresá</h3>
+            <p className="text-muted" style={{ fontSize: 13, margin: 0 }}>
+              Con tu DNI podés dejar reviews, votar las útiles y editar las tuyas.
+            </p>
+          </div>
 
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
+          {error && <div className="alert alert-error">{error}</div>}
 
-          <TextField
-            label="DNI"
-            value={dni}
-            onChange={(e) => setDni(e.target.value)}
-            autoFocus
-            fullWidth
-            slotProps={{ htmlInput: { inputMode: 'numeric', maxLength: 8 } }}
-            sx={{ mb: 3 }}
-          />
-          <Button type="submit" variant="contained" fullWidth disabled={enviando}>
-            Continuar
-          </Button>
-        </Box>
+          <Field label="DNI" htmlFor="dni">
+            <Input
+              id="dni"
+              value={dni}
+              onChange={(e) => setDni(e.target.value)}
+              autoFocus
+              inputMode="numeric"
+              maxLength={8}
+              placeholder="Ej: 40123456"
+            />
+          </Field>
+          <Button variant="primary" type="submit" block disabled={enviando}>Continuar</Button>
+        </form>
       ) : (
-        <Box component="form" onSubmit={crearCuenta}>
-          <Button
-            onClick={volver}
-            startIcon={<ArrowBackIcon />}
-            size="small"
-            sx={{ mb: 1 }}
-            disabled={enviando}
-          >
+        <form onSubmit={crearCuenta} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+          <Button variant="ghost" icon={IconArrowLeft} onClick={volver} disabled={enviando} style={{ alignSelf: 'flex-start' }}>
             Volver
           </Button>
 
-          <Typography variant="h5" gutterBottom>
-            Primera vez por acá
-          </Typography>
-          <Typography color="text.secondary" sx={{ mb: 3 }}>
-            El DNI {dni} no está registrado. Elegí un nombre para aparecer en tus
-            reseñas.
-          </Typography>
+          <div>
+            <h3 style={{ marginBottom: 'var(--space-1)' }}>Primera vez por acá</h3>
+            <p className="text-muted" style={{ fontSize: 13, margin: 0 }}>
+              El DNI {dni} no está registrado. Elegí un nombre para aparecer en tus reseñas.
+            </p>
+          </div>
 
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
+          {error && <div className="alert alert-error">{error}</div>}
 
-          <TextField
-            label="Nombre"
-            value={nombre}
-            onChange={(e) => setNombre(e.target.value)}
-            autoFocus
-            fullWidth
-            sx={{ mb: 3 }}
-          />
-          <Button type="submit" variant="contained" fullWidth disabled={enviando}>
-            Crear cuenta y entrar
-          </Button>
-        </Box>
+          <Field label="Nombre" htmlFor="nombre">
+            <Input id="nombre" value={nombre} onChange={(e) => setNombre(e.target.value)} autoFocus placeholder="Un nombre o apodo" />
+          </Field>
+          <Button variant="primary" type="submit" block disabled={enviando}>Crear cuenta y entrar</Button>
+        </form>
       )}
-    </Paper>
+    </div>
   );
 }

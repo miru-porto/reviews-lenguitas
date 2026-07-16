@@ -1,12 +1,17 @@
 // Módulo central de acceso a la API REST de Spring Boot.
 //
-// Todas las llamadas pasan por acá para no repetir la URL base ni la lógica de
-// errores en cada pantalla. La API corre en otro origen (localhost:8080) que el
-// front (localhost:5173), por eso `credentials: 'include'`: le dice al navegador
-// que mande la cookie de sesión. El backend lo permite porque su CORS tiene
-// allowCredentials=true para este origen.
-
-const BASE_URL = 'http://localhost:8080';
+// Todas las llamadas pasan por acá para no repetir la lógica de errores en cada
+// pantalla. Los paths son relativos (/api/...) a propósito: el front siempre le
+// pega a su PROPIO origen y nunca al dominio real del backend. Quien reenvía es
+// el proxy de Vite en desarrollo (vite.config.js) y el rewrite de Vercel en
+// producción (frontend/vercel.json).
+//
+// El motivo es la cookie de sesión. Si el navegador la viera venir de otro
+// dominio (onrender.com sobre una página vercel.app) sería una cookie de
+// terceros: Safari la bloquea de fábrica y el login se rompería. Con un solo
+// origen es first-party y no hay nada que negociar — tampoco CORS.
+//
+// `credentials: 'include'` igual hace falta para que la cookie viaje.
 
 /**
  * Error de API con el status HTTP y el mensaje que devolvió el backend.
@@ -28,7 +33,7 @@ export class ApiError extends Error {
 async function get(path) {
   let respuesta;
   try {
-    respuesta = await fetch(`${BASE_URL}${path}`, {
+    respuesta = await fetch(path, {
       credentials: 'include',
     });
   } catch {
@@ -57,7 +62,7 @@ function leerCookie(nombre) {
 async function enviar(metodo, path, cuerpo) {
   let respuesta;
   try {
-    respuesta = await fetch(`${BASE_URL}${path}`, {
+    respuesta = await fetch(path, {
       method: metodo,
       credentials: 'include',
       headers: {
@@ -100,7 +105,13 @@ async function manejarRespuesta(respuesta) {
 
 // ---- Endpoints de lectura (Fase 3) ----
 
-/** GET /api/materias → [{ id, nombre, anio }] ordenadas por año y nombre. */
+/**
+ * GET /api/materias → [{ id, nombre, anio, promedioRating, cantidadCatedras,
+ * cantidadReviews }] ordenadas por año y nombre. Los agregados vienen en la
+ * misma respuesta: la portada los pinta por materia y suma los totales de la
+ * cabecera sin pedir nada más. El admin usa esta misma lista e ignora los
+ * campos que no le sirven.
+ */
 export function getMaterias() {
   return get('/api/materias');
 }

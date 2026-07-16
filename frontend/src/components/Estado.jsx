@@ -1,31 +1,26 @@
-import Box from '@mui/material/Box';
-import CircularProgress from '@mui/material/CircularProgress';
-import Alert from '@mui/material/Alert';
-import Typography from '@mui/material/Typography';
-
 /** Spinner centrado, para mientras carga una pantalla. */
 export function Cargando() {
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-      <CircularProgress />
-    </Box>
+    <div style={{ display: 'flex', justifyContent: 'center', padding: 'var(--space-8) 0' }}>
+      <div className="spinner" role="status" aria-label="Cargando" />
+    </div>
   );
 }
 
 /** Mensaje de error de la API. */
 export function ErrorMensaje({ error }) {
   return (
-    <Alert severity="error" sx={{ my: 2 }}>
+    <div className="alert alert-error" role="alert" style={{ margin: 'var(--space-4) 0' }}>
       {error?.message || 'Ocurrió un error inesperado'}
-    </Alert>
+    </div>
   );
 }
 
 /** Texto gris para listas vacías ("no hay nada todavía"). */
 export function Vacio({ children }) {
   return (
-    <Typography color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>
+    <p className="text-muted" style={{ padding: 'var(--space-8) 0', textAlign: 'center' }}>
       {children}
-    </Typography>
+    </p>
   );
 }

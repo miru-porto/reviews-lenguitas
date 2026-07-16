@@ -1,67 +1,54 @@
-import Box from '@mui/material/Box';
-import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
-import LinearProgress from '@mui/material/LinearProgress';
-import Rating from '@mui/material/Rating';
+import { Stars } from './ui/Stars';
 
 /**
  * Desglose de rating de una cátedra: el promedio grande a la izquierda y, a la
- * derecha, una barra por cada cantidad de estrellas (5 a 1) con su porcentaje.
+ * derecha, una barra por cada cantidad de estrellas (5 a 1) con su cantidad.
  * Recibe el objeto RatingBreakdown de la API: { promedio, total, niveles }.
  */
 export default function DesgloseRating({ rating }) {
   const { promedio, total, niveles } = rating;
 
   if (total === 0) {
-    return (
-      <Typography color="text.secondary">
-        Esta cátedra todavía no tiene reviews.
-      </Typography>
-    );
+    return <p className="text-muted" style={{ margin: 0 }}>Esta cátedra todavía no tiene reviews.</p>;
   }
 
   return (
-    <Stack
-      direction={{ xs: 'column', sm: 'row' }}
-      spacing={3}
-      sx={{ alignItems: 'center' }}
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'auto 1fr',
+        gap: 'var(--space-8)',
+        alignItems: 'center',
+      }}
     >
       {/* Promedio grande */}
-      <Box sx={{ textAlign: 'center', minWidth: 120 }}>
-        <Typography variant="h2" component="div" fontWeight={700}>
+      <div style={{ textAlign: 'center', minWidth: 120 }}>
+        <div style={{ fontFamily: 'var(--font-heading)', fontSize: 64, lineHeight: 1 }}>
           {promedio.toFixed(1)}
-        </Typography>
-        <Rating value={promedio} precision={0.1} readOnly />
-        <Typography variant="body2" color="text.secondary">
+        </div>
+        <Stars valor={promedio} size={20} />
+        <div className="text-muted" style={{ fontSize: 13, marginTop: 4 }}>
           {total} {total === 1 ? 'review' : 'reviews'}
-        </Typography>
-      </Box>
+        </div>
+      </div>
 
       {/* Barras por nivel */}
-      <Box sx={{ flexGrow: 1, width: '100%' }}>
+      <div>
         {niveles.map((nivel) => (
-          <Box
+          <div
             key={nivel.estrellas}
-            sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}
+            style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}
           >
-            <Typography variant="body2" sx={{ width: 24 }}>
-              {nivel.estrellas}★
-            </Typography>
-            <LinearProgress
-              variant="determinate"
-              value={nivel.porcentaje}
-              sx={{ flexGrow: 1, height: 8, borderRadius: 4 }}
-            />
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ width: 48, textAlign: 'right' }}
-            >
+            <span style={{ width: 28, fontSize: 13 }}>{nivel.estrellas}★</span>
+            <span className="bar-track">
+              <span className="bar-fill" style={{ width: `${nivel.porcentaje}%` }} />
+            </span>
+            <span className="text-muted" style={{ width: 28, fontSize: 12, textAlign: 'right' }}>
               {nivel.cantidad}
-            </Typography>
-          </Box>
+            </span>
+          </div>
         ))}
-      </Box>
-    </Stack>
+      </div>
+    </div>
   );
 }

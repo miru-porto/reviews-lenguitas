@@ -1,19 +1,13 @@
-import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
-import CardActions from '@mui/material/CardActions';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import Rating from '@mui/material/Rating';
-import Chip from '@mui/material/Chip';
-import Button from '@mui/material/Button';
-import ThumbUpOutlinedIcon from '@mui/icons-material/ThumbUpOutlined';
-import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
+import { Stars } from './ui/Stars';
+import Avatar from './ui/Avatar';
+import Tag from './ui/Tag';
+import Button from './ui/Button';
+import { IconThumbUp, IconEdit, IconTrash } from './ui/icons';
 
 /**
  * Una review: autor, fecha, puntuación en estrellas, comentario y cuántos la
- * marcaron útil. Con sesión (Fase 4c) el chip "útil" se vuelve un botón que
- * togglea el voto, y la review propia muestra editar / borrar.
+ * marcaron útil. Con sesión el chip "útil" se vuelve un botón que togglea el
+ * voto, y la review propia muestra editar / borrar.
  *
  * Props:
  *  - review: ReviewView { id, autor, puntuacion, comentario, cuatrimestre,
@@ -23,75 +17,57 @@ import DeleteIcon from '@mui/icons-material/Delete';
  *  - ocupado: deshabilita las acciones mientras hay una mutación en curso.
  */
 export default function ReviewCard({ review, onVotar, onEditar, onBorrar, ocupado }) {
-  const chipUtil = (
-    <Chip
-      icon={<ThumbUpOutlinedIcon />}
-      label={`Útil · ${review.votosUtil}`}
-      size="small"
-      variant={review.laVoteUtil ? 'filled' : 'outlined'}
-      color={review.laVoteUtil ? 'primary' : 'default'}
-      onClick={onVotar}
-      disabled={ocupado}
-      // clickable lo maneja MUI según si hay onClick; con onClick undefined queda
-      // como una etiqueta de solo lectura (deslogueado o review propia).
-    />
+  const etiquetaUtil = (
+    <>
+      <IconThumbUp size={13} /> Útil · {review.votosUtil}
+    </>
   );
 
   return (
-    <Card variant="outlined">
-      <CardContent>
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            mb: 1,
-          }}
-        >
-          <Box>
-            <Typography variant="subtitle1" fontWeight={600}>
-              {review.autor}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
+    <div className="card elev-sm">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 'var(--space-3)' }}>
+        <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center' }}>
+          <Avatar nombre={review.autor} size={38} variant="neutral" />
+          <div>
+            <div style={{ fontWeight: 600 }}>{review.autor}</div>
+            <div className="text-muted" style={{ fontSize: 12 }}>
               {/* Las reviews anteriores al campo cuatrimestre no lo tienen. */}
               {review.cuatrimestre ? `${review.fecha} · Cursó en ${review.cuatrimestre}` : review.fecha}
-            </Typography>
-          </Box>
-          <Rating value={review.puntuacion} readOnly size="small" />
-        </Box>
+            </div>
+          </div>
+        </div>
+        <Stars valor={review.puntuacion} size={16} />
+      </div>
 
-        <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', mb: 1.5 }}>
-          {review.comentario}
-        </Typography>
+      <p style={{ whiteSpace: 'pre-wrap', margin: 'var(--space-2) 0 var(--space-3)' }}>
+        {review.comentario}
+      </p>
 
-        {chipUtil}
-      </CardContent>
-
-      {review.esMia && (onEditar || onBorrar) && (
-        <CardActions sx={{ px: 2, pb: 2, pt: 0 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        {/* Botones de la review propia (editar/borrar), o nada. */}
+        <div style={{ display: 'flex', gap: 6 }}>
           {onEditar && (
-            <Button
-              size="small"
-              startIcon={<EditIcon />}
-              onClick={onEditar}
-              disabled={ocupado}
-            >
+            <Button variant="ghost" icon={IconEdit} onClick={onEditar} disabled={ocupado} style={{ fontSize: 13 }}>
               Editar
             </Button>
           )}
           {onBorrar && (
-            <Button
-              size="small"
-              color="error"
-              startIcon={<DeleteIcon />}
-              onClick={onBorrar}
-              disabled={ocupado}
-            >
+            <Button variant="ghost" icon={IconTrash} onClick={onBorrar} disabled={ocupado} style={{ fontSize: 13, color: '#e5484d' }}>
               Borrar
             </Button>
           )}
-        </CardActions>
-      )}
-    </Card>
+        </div>
+
+        {/* Chip "útil": clickeable si hay sesión y la review es ajena; si no,
+            etiqueta de solo lectura. */}
+        {onVotar ? (
+          <Tag variant={review.laVoteUtil ? 'accent' : 'outline'} onClick={onVotar} disabled={ocupado}>
+            {etiquetaUtil}
+          </Tag>
+        ) : (
+          <Tag variant={review.laVoteUtil ? 'accent' : 'neutral'}>{etiquetaUtil}</Tag>
+        )}
+      </div>
+    </div>
   );
 }
