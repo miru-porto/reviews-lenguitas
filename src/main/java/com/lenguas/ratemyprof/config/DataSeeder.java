@@ -26,8 +26,8 @@ import java.util.Objects;
  *  - Materias y su año de cursada: "materias y sistema de correlativas.pdf"
  *    (solo la carrera de Inglés; las variantes de Portugués quedan afuera).
  *  - Cátedras (qué profesor dicta cada materia): horarios de los turnos mañana
- *    y vespertino del 2° cuatrimestre 2026. De ahí solo salen apellidos (a lo
- *    sumo una inicial), por eso el nombre de los profesores queda vacío.
+ *    y vespertino del 1er y 2do cuatrimestre 2026. De ahí solo salen apellidos
+ *    (a lo sumo una inicial), por eso el nombre de los profesores queda vacío.
  *
  * El mismo catálogo está en data-seed.sql (versión SQL, base de la futura
  * migración Flyway): si se cambia acá hay que cambiarlo allá también.
@@ -136,39 +136,44 @@ public class DataSeeder implements CommandLineRunner {
             {"", "Ferreyra Fernández"}, {"", "Jacovkis"}, {"", "Curatolo"}, {"", "Carrió"},
             {"", "Ertel"}, {"", "Adem"}, {"", "Clessi"}, {"", "Tabakian"},
             {"", "Arriagada"}, {"", "Rodrigues Da Silva"}, {"", "Perduca"},
-            {"", "De Carlos"}, {"", "Raviolo"},
+            {"", "De Carlos"}, {"", "Raviolo"}, {"", "Cabral"}, {"", "Zito Lema"},
+            {"", "Otero"},
     };
 
     /**
-     * Cátedras del 2° cuatrimestre 2026: la materia seguida de los profesores
-     * que la dictan (clave "inicial apellido" cuando hay inicial). Las materias
-     * que no aparecen no se dictan este cuatrimestre y quedan sin cátedras.
+     * Cátedras del año 2026 (unión del 1er y 2do cuatrimestre): la materia
+     * seguida de los profesores que la dictan (clave "inicial apellido" cuando
+     * hay inicial). Varias materias "pares" rotan docentes entre cuatrimestres
+     * (Taller 1↔2, 3↔4, 5↔6, Didáctica Específica 1↔2, Creatividad 1↔2,
+     * Literatura 1↔2, Cultura 2↔3, Ab Initio 1↔2): por eso el mismo profesor
+     * aparece en ambas materias del par. Las materias que no aparecen no se
+     * dictaron en 2026 (las residencias) y quedan sin cátedras.
      */
     private static final String[][] CATEDRAS = {
             // ----- 1er año -----
             {"Lengua Inglesa 1", "De Domenico", "Ragno", "Crottogini", "Costa"},
             {"Gramática Inglesa 1", "Mortoro", "Rossell", "V. Fernandez", "Rodríguez", "Caligaris"},
             {"Fonología y Práctica de Laboratorio 1", "Pérez Ponsa", "Massolo", "Carteau", "Morelli"},
-            {"Taller 1", "Bessega", "Castino"},
-            {"Taller 2", "Jaschek", "Bessega", "F. Costa"},
-            {"Pedagogía", "Del Regno", "Bergel"},
+            {"Taller 1", "Bessega", "Castino", "Jaschek", "F. Costa"},
+            {"Taller 2", "Jaschek", "Bessega", "F. Costa", "Castino"},
+            {"Pedagogía", "Del Regno", "Bergel", "Belser"},
             {"Didáctica General", "Spina", "Belser", "Del Regno"},
             {"Psicología Educacional", "Eichenbronner", "Rosenfeld"},
             {"Taller de Nuevas Tecnologías", "Olivera", "Berardi"},
-            {"Taller de Lectura, Escritura y Oralidad (TLEO)", "Querales", "Kandel"},
+            {"Taller de Lectura, Escritura y Oralidad (TLEO)", "Querales", "Kandel", "Cabral"},
             // ----- 2do año -----
             {"Lengua Inglesa 2", "Tordoni", "Crottogini", "Derman"},
             {"Gramática Inglesa 2", "Banfi", "Almagro"},
             {"Fonología y Práctica de Laboratorio 2", "Carteau", "Luccon", "Benítez"},
             {"Cultura de los Pueblos de Habla Inglesa 1", "Fernández Armendáriz", "Ferraro", "Roldán"},
-            {"Didáctica Específica 1", "Chervonko", "Asereny"},
-            {"Didáctica Específica 2", "Longobardi"},
-            {"Creatividad 1", "Accardo"},
-            {"Taller 3", "Bessega", "Castino"},
-            {"Taller 4", "Castino", "F. Costa"},
+            {"Didáctica Específica 1", "Chervonko", "Asereny", "Longobardi"},
+            {"Didáctica Específica 2", "Longobardi", "Chervonko", "Asereny"},
+            {"Creatividad 1", "Accardo", "Durán"},
+            {"Taller 3", "Bessega", "Castino", "F. Costa"},
+            {"Taller 4", "Castino", "F. Costa", "Bessega"},
             {"Sujetos de la Educación 1", "Ferrari", "Veneroso"},
             {"Sistema y Política Educativa", "Gentile", "Del Regno", "Ambao"},
-            {"Metodología de la Investigación", "Villarejo", "Rivas"},
+            {"Metodología de la Investigación", "Villarejo", "Rivas", "Zito Lema"},
             {"Educación Sexual Integral (ESI)", "Veronelli", "Accardo"},
             // ----- 3er año -----
             {"Lengua Inglesa 3", "Caligaris", "Longobardi"},
@@ -176,12 +181,12 @@ public class DataSeeder implements CommandLineRunner {
             {"Fonología y Práctica de Laboratorio 3", "Massolo", "Luccon", "Prado"},
             {"Literatura en Lengua Inglesa 1", "Costa"},
             {"Literatura en Lengua Inglesa 2", "Costa"},
-            {"Sujetos de la Educación 2", "Rivarola"},
+            {"Sujetos de la Educación 2", "Rivarola", "Otero"},
             {"Creatividad 2", "Durán", "Accardo"},
-            {"Taller 5 (de Inicial y Primaria)", "Muiño"},
+            {"Taller 5 (de Inicial y Primaria)", "Muiño", "Castino"},
             {"Seminario de Investigación Acción 1", "Banfi"},
             {"Informática para la Enseñanza", "Berardi", "Dayan"},
-            {"Instituciones Educativas", "Esmoris", "Kirsanov"},
+            {"Instituciones Educativas", "Esmoris", "Kirsanov", "Gentile"},
             {"Saberes Lúdicos, Corporales y Motores", "Plencovich"},
             // Trabajo de Campo se cursa "en" una materia del CFG: una cátedra
             // por cada profesor que lo recibe.
@@ -189,16 +194,18 @@ public class DataSeeder implements CommandLineRunner {
                     "Belser", "Spina", "Kirsanov", "Ambao", "Rosenfeld", "Bergel"},
             // ----- 4to año -----
             {"Lengua Inglesa 4", "Ferreyra Fernández", "Longobardi"},
+            {"Cultura de los Pueblos de Habla Inglesa 2", "Fernández Armendáriz", "Perduca"},
             {"Literatura en Lengua Inglesa 3", "Fernández Armendáriz", "Jacovkis"},
             {"Análisis y Redacción de Textos", "Curatolo", "Carrió"},
             {"Teatro", "Ertel"},
-            {"Taller 6 (de Nivel Medio)", "Castino"},
+            {"Taller 6 (de Nivel Medio)", "Castino", "Muiño"},
             {"Seminario de Investigación Acción 2", "Adem"},
-            {"Nuevos Escenarios, Cultura, Tecnología y Subjetividad", "Villarejo"},
+            {"Nuevos Escenarios, Cultura, Tecnología y Subjetividad", "Villarejo", "Tabakian"},
             {"Trabajo / Profesionalización Docente", "Clessi", "Rivas"},
             {"Filosofía", "Tabakian", "Arriagada"},
             {"TIC Aplicadas", "Dayan"},
             // ----- 5to año -----
+            {"Portugués Ab Initio 1", "Rodrigues Da Silva"},
             {"Portugués Ab Initio 2", "Rodrigues Da Silva"},
             {"Cultura de los Pueblos de Habla Inglesa 3", "Fernández Armendáriz", "Perduca"},
             {"Literatura en Lengua Inglesa 4", "Fernández Armendáriz", "Jacovkis"},

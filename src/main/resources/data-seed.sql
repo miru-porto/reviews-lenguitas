@@ -12,8 +12,8 @@
 -- Fuentes:
 --  - Materias y año de cursada: "materias y sistema de correlativas.pdf"
 --    (solo la carrera de Inglés).
---  - Cátedras: horarios TM y TV del 2° cuatrimestre 2026. Solo publican
---    apellidos (a lo sumo una inicial): el nombre queda vacío.
+--  - Cátedras: horarios TM y TV del 1er y 2do cuatrimestre 2026. Solo
+--    publican apellidos (a lo sumo una inicial): el nombre queda vacío.
 -- =====================================================================
 
 -- ===== Materias (anio = año de cursada según el plan; 5to = plan de 5 años) =====
@@ -149,36 +149,41 @@ INSERT INTO profesores (id, nombre, apellido) VALUES
 (66, '', 'Rodrigues Da Silva'),
 (67, '', 'Perduca'),
 (68, '', 'De Carlos'),
-(69, '', 'Raviolo');
+(69, '', 'Raviolo'),
+(70, '', 'Cabral'),
+(71, '', 'Zito Lema'),
+(72, '', 'Otero');
 
--- ===== Cátedras del 2° cuatrimestre 2026 (profesor_id, materia_id) =====
--- Las materias sin cátedra no se dictan este cuatrimestre (residencias,
--- Cultura 2, Portugués Ab Initio 1).
+-- ===== Cátedras 2026, unión de 1er y 2do cuatrimestre (profesor_id, materia_id) =====
+-- Varias materias "pares" rotan docentes entre cuatrimestres (Taller 1<->2,
+-- 3<->4, 5<->6, Didáctica Específica 1<->2, Creatividad 1<->2, Literatura
+-- 1<->2, Cultura 2<->3, Ab Initio 1<->2): el mismo profesor aparece en ambas.
+-- Las materias sin cátedra no se dictaron en 2026 (las residencias).
 INSERT INTO catedras (profesor_id, materia_id) VALUES
 -- 1er año
 (1, 1), (2, 1), (3, 1), (4, 1),                    -- Lengua Inglesa 1
 (6, 2), (7, 2), (8, 2), (9, 2), (10, 2),           -- Gramática Inglesa 1
 (11, 3), (12, 3), (13, 3), (14, 3),                -- Fonología y Práctica de Lab. 1
-(15, 4), (16, 4),                                  -- Taller 1
-(17, 5), (15, 5), (5, 5),                          -- Taller 2
-(18, 6), (19, 6),                                  -- Pedagogía
+(15, 4), (16, 4), (17, 4), (5, 4),                 -- Taller 1
+(17, 5), (15, 5), (5, 5), (16, 5),                 -- Taller 2
+(18, 6), (19, 6), (21, 6),                         -- Pedagogía
 (20, 7), (21, 7), (18, 7),                         -- Didáctica General
 (22, 8), (23, 8),                                  -- Psicología Educacional
 (24, 9), (25, 9),                                  -- Taller de Nuevas Tecnologías
-(26, 10), (27, 10),                                -- TLEO
+(26, 10), (27, 10), (70, 10),                      -- TLEO
 -- 2do año
 (28, 11), (3, 11), (29, 11),                       -- Lengua Inglesa 2
 (30, 12), (31, 12),                                -- Gramática Inglesa 2
 (13, 13), (32, 13), (33, 13),                      -- Fonología y Práctica de Lab. 2
 (34, 14), (35, 14), (36, 14),                      -- Cultura Inglesa 1
-(37, 15), (38, 15),                                -- Didáctica Específica 1
-(39, 16),                                          -- Didáctica Específica 2
-(40, 17),                                          -- Creatividad 1
-(15, 18), (16, 18),                                -- Taller 3
-(16, 19), (5, 19),                                 -- Taller 4
+(37, 15), (38, 15), (39, 15),                      -- Didáctica Específica 1
+(39, 16), (37, 16), (38, 16),                      -- Didáctica Específica 2
+(40, 17), (41, 17),                                -- Creatividad 1
+(15, 18), (16, 18), (5, 18),                       -- Taller 3
+(16, 19), (5, 19), (15, 19),                       -- Taller 4
 (42, 20), (43, 20),                                -- Sujetos de la Educación 1
 (44, 21), (18, 21), (45, 21),                      -- Sistema y Política Educativa
-(46, 22), (47, 22),                                -- Metodología de la Investigación
+(46, 22), (47, 22), (71, 22),                      -- Metodología de la Investigación
 (48, 23), (40, 23),                                -- ESI
 -- 3er año
 (10, 24), (39, 24),                                -- Lengua Inglesa 3
@@ -186,27 +191,29 @@ INSERT INTO catedras (profesor_id, materia_id) VALUES
 (12, 26), (32, 26), (50, 26),                      -- Fonología y Práctica de Lab. 3
 (4, 27),                                           -- Literatura en Lengua Inglesa 1
 (4, 28),                                           -- Literatura en Lengua Inglesa 2
-(51, 29),                                          -- Sujetos de la Educación 2
+(51, 29), (72, 29),                                -- Sujetos de la Educación 2
 (41, 30), (40, 30),                                -- Creatividad 2
-(52, 31),                                          -- Taller 5
+(52, 31), (16, 31),                                -- Taller 5
 (30, 33),                                          -- Seminario de Investigación Acción 1
 (25, 34), (53, 34),                                -- Informática para la Enseñanza
-(54, 35), (55, 35),                                -- Instituciones Educativas
+(54, 35), (55, 35), (44, 35),                      -- Instituciones Educativas
 (56, 36),                                          -- Saberes Lúdicos
 (18, 37), (22, 37), (54, 37), (44, 37), (21, 37),  -- Trabajo de Campo
 (20, 37), (55, 37), (45, 37), (23, 37), (19, 37),
 -- 4to año
 (57, 38), (39, 38),                                -- Lengua Inglesa 4
+(34, 39), (67, 39),                                -- Cultura Inglesa 2
 (34, 40), (58, 40),                                -- Literatura en Lengua Inglesa 3
 (59, 41), (60, 41),                                -- Análisis y Redacción de Textos
 (61, 42),                                          -- Teatro
-(16, 43),                                          -- Taller 6
+(16, 43), (52, 43),                                -- Taller 6
 (62, 45),                                          -- Seminario de Investigación Acción 2
-(46, 46),                                          -- Nuevos Escenarios
+(46, 46), (64, 46),                                -- Nuevos Escenarios
 (63, 47), (47, 47),                                -- Trabajo / Profesionalización Docente
 (64, 48), (65, 48),                                -- Filosofía
 (53, 49),                                          -- TIC Aplicadas
 -- 5to año
+(66, 50),                                          -- Portugués Ab Initio 1
 (66, 51),                                          -- Portugués Ab Initio 2
 (34, 52), (67, 52),                                -- Cultura Inglesa 3
 (34, 53), (58, 53),                                -- Literatura en Lengua Inglesa 4
