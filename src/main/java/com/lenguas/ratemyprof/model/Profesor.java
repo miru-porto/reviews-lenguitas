@@ -16,9 +16,13 @@ public class Profesor {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank
+    /**
+     * Opcional: los horarios oficiales solo publican el apellido (a lo sumo una
+     * inicial, ej: "Fernandez, V."), así que muchos profesores se cargan sin
+     * nombre y se completa después desde la pantalla de admin. Vacío = no se sabe.
+     */
     @Column(nullable = false)
-    private String nombre;
+    private String nombre = "";
 
     @NotBlank
     @Column(nullable = false)

@@ -23,7 +23,7 @@
         </a>
 
         <h2 style="margin: 1rem 0;">
-            <span th:text="${catedra.apellidoProfesor + ', ' + catedra.nombreProfesor}">García, María</span>
+            <span th:text="${catedra.apellidoProfesor + (#strings.isEmpty(catedra.nombreProfesor) ? '' : ', ' + catedra.nombreProfesor)}">García, María</span>
         </h2>
         <p style="color: #666; margin-bottom: 1rem;" th:text="${catedra.materiaNombre}">Fonética</p>
 

@@ -16,7 +16,7 @@
 
         <h2 style="margin: 1rem 0;">Dejar review</h2>
         <p style="color: #666; margin-bottom: 1.5rem;">
-            <span th:text="${catedra.profesor.apellido + ', ' + catedra.profesor.nombre}">Prof</span>
+            <span th:text="${catedra.profesor.apellido + (#strings.isEmpty(catedra.profesor.nombre) ? '' : ', ' + catedra.profesor.nombre)}">Prof</span>
             — <span th:text="${catedra.materia.nombre}">Materia</span>
         </p>
 

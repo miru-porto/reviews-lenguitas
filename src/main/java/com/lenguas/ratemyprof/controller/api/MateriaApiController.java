@@ -9,6 +9,7 @@ import com.lenguas.ratemyprof.service.AdminService;
 import com.lenguas.ratemyprof.service.CatedraService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -40,11 +41,14 @@ public class MateriaApiController {
     private final CatedraService catedraService;
     private final AdminService adminService;
 
-    /** Todas las materias. Se mapea a DTO: la entidad expone relaciones LAZY. */
+    /**
+     * Todas las materias, ordenadas por año de cursada y nombre (las sin año
+     * quedan al final). Se mapea a DTO: la entidad expone relaciones LAZY.
+     */
     @GetMapping
     public List<MateriaView> listar() {
-        return materiaRepository.findAll().stream()
-                .map(m -> new MateriaView(m.getId(), m.getNombre()))
+        return materiaRepository.findAll(Sort.by("anio", "nombre")).stream()
+                .map(m -> new MateriaView(m.getId(), m.getNombre(), m.getAnio()))
                 .toList();
     }
 
@@ -66,7 +70,7 @@ public class MateriaApiController {
     /** Crear una materia. 201 con la vista; 409 si el nombre ya existe. */
     @PostMapping
     public ResponseEntity<MateriaView> crear(@Valid @RequestBody MateriaRequest req) {
-        MateriaView creada = adminService.crearMateria(req.getNombre());
+        MateriaView creada = adminService.crearMateria(req.getNombre(), req.getAnio());
         return ResponseEntity.status(HttpStatus.CREATED).body(creada);
     }
 
@@ -74,7 +78,7 @@ public class MateriaApiController {
     @PutMapping("/{id}")
     public ResponseEntity<Void> editar(@PathVariable Long id,
                                        @Valid @RequestBody MateriaRequest req) {
-        adminService.editarMateria(id, req.getNombre());
+        adminService.editarMateria(id, req.getNombre(), req.getAnio());
         return ResponseEntity.noContent().build();
     }
 

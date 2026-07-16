@@ -28,7 +28,7 @@ public class BusquedaService {
         }
 
         List<MateriaView> materias = materiaRepository.findByNombreContainingIgnoreCase(q).stream()
-                .map(m -> new MateriaView(m.getId(), m.getNombre()))
+                .map(m -> new MateriaView(m.getId(), m.getNombre(), m.getAnio()))
                 .toList();
 
         List<CatedraView> catedras = catedraRepository.buscarPorProfesor(q).stream()

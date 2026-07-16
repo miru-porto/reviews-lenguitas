@@ -10,7 +10,7 @@ import lombok.Data;
 @Data
 public class ProfesorRequest {
 
-    @NotBlank(message = "El nombre no puede estar vacío")
+    /** Opcional: de muchos profesores solo se conoce el apellido (ver Profesor). */
     @Size(max = 100, message = "El nombre no puede superar los 100 caracteres")
     private String nombre;
 

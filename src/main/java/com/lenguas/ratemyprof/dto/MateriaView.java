@@ -12,4 +12,6 @@ import lombok.Data;
 public class MateriaView {
     private Long id;
     private String nombre;
+    /** Año de cursada según el plan (1..5). Null en materias sin año asignado. */
+    private Integer anio;
 }

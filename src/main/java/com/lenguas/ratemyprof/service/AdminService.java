@@ -36,18 +36,19 @@ public class AdminService {
 
     // -------------------- Materias --------------------
 
-    public MateriaView crearMateria(String nombre) {
+    public MateriaView crearMateria(String nombre, Integer anio) {
         String limpio = nombre.trim();
         if (materiaRepository.existsByNombreIgnoreCase(limpio)) {
             throw new ConflictException("Ya existe una materia con ese nombre");
         }
         Materia materia = new Materia();
         materia.setNombre(limpio);
+        materia.setAnio(anio);
         materia = materiaRepository.save(materia);
-        return new MateriaView(materia.getId(), materia.getNombre());
+        return new MateriaView(materia.getId(), materia.getNombre(), materia.getAnio());
     }
 
-    public void editarMateria(Long id, String nombre) {
+    public void editarMateria(Long id, String nombre, Integer anio) {
         Materia materia = materiaRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Materia no encontrada"));
         String limpio = nombre.trim();
@@ -56,6 +57,7 @@ public class AdminService {
             throw new ConflictException("Ya existe una materia con ese nombre");
         }
         materia.setNombre(limpio);
+        materia.setAnio(anio);
         materiaRepository.save(materia);
     }
 
@@ -74,7 +76,8 @@ public class AdminService {
     public ProfesorView crearProfesor(String nombre, String apellido) {
         // Sin chequeo de duplicados: dos profesores pueden llamarse igual.
         Profesor profesor = new Profesor();
-        profesor.setNombre(nombre.trim());
+        // El nombre es opcional (ver Profesor): null se normaliza a vacío.
+        profesor.setNombre(nombre == null ? "" : nombre.trim());
         profesor.setApellido(apellido.trim());
         return ProfesorView.de(profesorRepository.save(profesor));
     }
@@ -82,7 +85,7 @@ public class AdminService {
     public void editarProfesor(Long id, String nombre, String apellido) {
         Profesor profesor = profesorRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Profesor no encontrado"));
-        profesor.setNombre(nombre.trim());
+        profesor.setNombre(nombre == null ? "" : nombre.trim());
         profesor.setApellido(apellido.trim());
         profesorRepository.save(profesor);
     }
