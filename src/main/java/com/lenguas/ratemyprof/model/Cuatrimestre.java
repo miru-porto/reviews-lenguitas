@@ -7,8 +7,8 @@ import java.util.List;
 /**
  * El "cuatrimestre cursado" de una review, con formato "1C 2025" / "2C 2025".
  * No es una entidad: es el único lugar que define qué valores son válidos,
- * para que la API, el form Thymeleaf y la validación usen exactamente la
- * misma lista. El front React genera las mismas opciones por su cuenta
+ * para que la API y la validación usen exactamente la misma lista. El front
+ * React genera las mismas opciones por su cuenta
  * (frontend/src/utils/cuatrimestres.js): si se cambia la regla acá hay que
  * cambiarla allá también.
  */

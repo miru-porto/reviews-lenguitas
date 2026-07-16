@@ -4,13 +4,22 @@ Sitio web de reviews de profesores del colegio Lenguas Vivas. Los visitantes
 navegan materias → cátedras → reviews sin loguearse; los usuarios registrados
 pueden dejar una review por cátedra, editarla o borrarla.
 
+Arquitectura: **API REST (Spring Boot) + frontend React (SPA)**. El backend
+expone `/api/**` en JSON y no renderiza vistas; el front las arma en el navegador.
+
 ## Stack
 
+**Backend**
 - Java 21 / Spring Boot 3.5.16 (Web, Data JPA, Security, Validation)
-- Thymeleaf para las vistas (server-side rendering)
-- PostgreSQL
+- PostgreSQL + Flyway (migraciones)
 - Lombok
 - Maven
+
+**Frontend** (`frontend/`)
+- React 19 + Vite
+- Material UI (MUI)
+- React Router
+- Autenticación por sesión (cookie): la SPA llama a la API con `credentials: 'include'`.
 
 ## Setup rápido
 
@@ -35,13 +44,26 @@ SPRING_DATASOURCE_USERNAME=postgres
 SPRING_DATASOURCE_PASSWORD=tu_password_aqui
 ```
 
-### 3. Ejecutar la app
+### 3. Ejecutar el backend (API)
 
 ```bash
 mvn spring-boot:run
 ```
 
-La app arranca en `http://localhost:8080`
+La API arranca en `http://localhost:8080` (endpoints bajo `/api`).
+
+### 3b. Ejecutar el frontend (React)
+
+En otra terminal:
+
+```bash
+cd frontend
+npm install   # la primera vez
+npm run dev
+```
+
+El front arranca en `http://localhost:5173` y consume la API del `8080`
+(CORS ya está configurado para ese origen en desarrollo).
 
 ### 4. Datos de prueba
 
@@ -57,34 +79,46 @@ src/main/java/com/lenguas/ratemyprof/
 ├── model/           # Entidades JPA (Usuario, Materia, Profesor, Catedra, Review)
 ├── repository/      # Interfaces JPA con queries custom
 ├── service/         # Lógica de negocio (filtros, ratings, autorización de reviews)
-├── controller/      # Endpoints y vistas Thymeleaf
+├── controller/api/  # REST controllers (JSON); no hay vistas server-side
 ├── dto/             # Entrada con validación (ReviewForm) y view models de salida
 │                    # (ReviewView, CatedraView, RatingBreakdown)
-└── config/          # Spring Security
+├── exception/       # Excepciones de dominio + @RestControllerAdvice a JSON
+└── config/          # Spring Security (filter chain de /api, CORS, CSRF)
+
+src/main/resources/db/migration/   # Migraciones Flyway (V1 esquema, V2 seed)
+frontend/                          # SPA React (Vite): pantallas, api/, auth/
 ```
 
-Arquitectura MVC en capas: `Controller → Service → Repository → PostgreSQL`,
-con Thymeleaf renderizando los templates de `resources/templates/`. Los
-controllers no contienen lógica de negocio y las vistas consumen DTOs, no
-entidades JPA.
+Backend en capas: `REST Controller → Service → Repository → PostgreSQL`. Los
+controllers solo traducen HTTP; la lógica (ratings, autorización, anti-duplicado)
+vive en los services y se expone en JSON. Nada de vistas server-side: eso es React.
 
-## Rutas principales
+## Endpoints principales
 
-| Ruta | Acceso | Qué hace |
+Lectura pública (sin login):
+
+| Método | Ruta | Qué hace |
 |---|---|---|
-| `/` | público | Redirige a `/materias` |
-| `/materias` | público | Lista de materias |
-| `/materias/{id}` | público | Cátedras de una materia, ordenadas por rating |
-| `/catedra/{id}` | público | Reviews de una cátedra + desglose de estrellas (orden por fecha o por votos útiles con `?orden=utiles`) |
-| `/buscar?q=...` | público | Búsqueda por nombre de materia o profesor |
-| `/review/nueva/{catedraId}` | logueado | Crear review (una por usuario por cátedra) |
-| `/review/{id}/editar` | logueado (solo el autor) | Editar review propia |
-| `/review/{id}/util` | logueado (no el autor) | Marcar/desmarcar una review como útil |
-| `/review/{id}/borrar` | logueado (solo el autor) | Borrar review propia |
-| `/login`, `/registro`, `/logout` | público | Autenticación |
+| GET | `/api/materias` | Lista de materias (ordenadas por año y nombre) |
+| GET | `/api/materias/{id}/catedras` | Cátedras de una materia, ordenadas por rating |
+| GET | `/api/catedras/{id}` | Detalle de una cátedra + desglose de estrellas |
+| GET | `/api/catedras/{id}/reviews` | Reviews paginadas (`?orden=fecha\|utiles`, `?page=&size=`) |
+| GET | `/api/buscar?q=...` | Búsqueda por nombre de materia o profesor |
+
+Sesión (login por DNI):
+
+| Método | Ruta | Qué hace |
+|---|---|---|
+| POST | `/api/auth/login` · `/api/auth/registro` · `/api/auth/logout` | Autenticación |
+| GET | `/api/auth/me` | Usuario actual (401 si no hay sesión) |
+| POST/PUT/DELETE | `/api/reviews` · `/api/reviews/{id}` | Crear / editar / borrar review propia |
+| POST | `/api/reviews/{id}/util` | Marcar/desmarcar una review como útil |
+
+Solo ADMIN (rol en la sesión): escrituras `POST/PUT/DELETE` sobre
+`/api/materias`, `/api/profesores` y `/api/catedras`.
 
 La autorización de editar/borrar se verifica **en el servidor** (en
-`ReviewService`), no solo ocultando botones en la vista.
+`ReviewService`), no solo ocultando botones en el front.
 
 ## Flujo principal
 

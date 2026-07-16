@@ -14,8 +14,8 @@ import java.util.Map;
 
 /**
  * Manejo de errores de la API: convierte excepciones en respuestas JSON con
- * el status correcto. El basePackages lo limita a los rest controllers; las
- * páginas Thymeleaf siguen usando el flujo de error normal de Spring.
+ * el status correcto. El basePackages lo limita a los rest controllers de
+ * controller.api.
  */
 @RestControllerAdvice(basePackages = "com.lenguas.ratemyprof.controller.api")
 public class ApiExceptionHandler {

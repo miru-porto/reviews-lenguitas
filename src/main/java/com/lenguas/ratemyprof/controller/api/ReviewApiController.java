@@ -23,12 +23,11 @@ import org.springframework.web.bind.annotation.RestController;
 import java.net.URI;
 
 /**
- * API de escritura de reviews: verbos REST de verdad (POST/PUT/DELETE) en vez
- * de los /review/nueva, /editar, /borrar del form Thymeleaf. Todas requieren
+ * API de escritura de reviews: verbos REST (POST/PUT/DELETE). Todas requieren
  * sesión (lo garantiza la filter chain de /api); el usuario sale de Authentication.
  *
- * La lógica (autorización, duplicados, borrado de votos) vive en ReviewService,
- * el mismo que usa el controller Thymeleaf: acá solo traducimos a HTTP.
+ * La lógica (autorización, duplicados, borrado de votos) vive en ReviewService:
+ * acá solo traducimos a HTTP.
  */
 @RestController
 @RequestMapping("/api/reviews")

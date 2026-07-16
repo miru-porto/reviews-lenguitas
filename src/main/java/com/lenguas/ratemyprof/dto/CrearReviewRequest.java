@@ -8,9 +8,8 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 /**
- * Cuerpo JSON de POST /api/reviews. Como el REST identifica la cátedra en el
- * body (no en la URL, a diferencia del form Thymeleaf /review/nueva/{catedraId}),
- * incluye catedraId. Las mismas reglas de puntuación/comentario que ReviewForm.
+ * Cuerpo JSON de POST /api/reviews. El REST identifica la cátedra en el body, por
+ * eso incluye catedraId. Las mismas reglas de puntuación/comentario que ReviewForm.
  */
 @Data
 public class CrearReviewRequest {

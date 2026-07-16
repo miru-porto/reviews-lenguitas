@@ -17,7 +17,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Sort;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -48,10 +47,6 @@ class AdminCrudApiTest {
 
     @Autowired
     private MockMvc mockMvc;
-
-    // Bean que SecurityConfig declara; mockeado para no armar el cableado real.
-    @MockBean
-    private AuthenticationManager authenticationManager;
 
     @MockBean
     private AdminService adminService;

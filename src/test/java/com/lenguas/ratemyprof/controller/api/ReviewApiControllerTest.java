@@ -16,7 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -53,10 +52,6 @@ class ReviewApiControllerTest {
     private ReviewService reviewService;
     @MockBean
     private UsuarioService usuarioService;
-    // La API chain define un AuthenticationManager; lo mockeamos para no depender
-    // del cableado real de autenticación en este slice.
-    @MockBean
-    private AuthenticationManager authenticationManager;
 
     private static final String DNI = "30111222";
 

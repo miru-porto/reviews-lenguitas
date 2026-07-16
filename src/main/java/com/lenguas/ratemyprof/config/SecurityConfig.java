@@ -2,15 +2,10 @@ package com.lenguas.ratemyprof.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
@@ -23,39 +18,22 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 /**
- * Dos filter chains: una para la API (/api/**) y otra para las páginas
- * Thymeleaf. Se ordenan; Spring prueba la de @Order más bajo primero. La de la
- * API tiene securityMatcher("/api/**"); la web no lo tiene, así que atrapa todo
- * lo que la API no reclamó.
+ * Seguridad de la API REST (/api/**). El backend ya no sirve páginas: el front
+ * es React (dev server aparte, o el build estático servido por este mismo app).
  *
- * ¿Por qué dos? La API y la web se defienden distinto:
- *  - API: sin login responde 401 en JSON (no redirige a /login), CORS para
- *    React, y CSRF vía cookie legible (patrón SPA).
- *  - Web: formLogin clásico, redirecciones, CSRF por token oculto en los forms.
+ * Una sola filter chain, con securityMatcher("/api/**"): las peticiones que no
+ * son de la API (los archivos del build de React, sus rutas de cliente) no
+ * pasan por Security y se sirven como recursos públicos.
+ *
+ * La API se defiende como una SPA: sin sesión responde 401 en JSON (no redirige
+ * a ningún /login), habilita CORS para el dev server de React y usa CSRF con
+ * cookie legible. La sesión (cookie) la inicia AuthApiController por DNI.
  */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
-    /**
-     * Necesario para el login por JSON: AuthApiController lo usa para autenticar
-     * email+password. Spring lo arma con nuestro UserDetailsService (UsuarioService)
-     * y el PasswordEncoder de arriba.
-     */
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
-    }
-
-    // -------------------- Filter chain de la API --------------------
-
-    @Bean
-    @Order(1)
     public SecurityFilterChain apiFilterChain(HttpSecurity http) throws Exception {
         // Handler que deja el token CSRF "en claro" (sin el enmascarado XOR anti-BREACH),
         // para que el valor de la cookie XSRF-TOKEN coincida con el del header que
@@ -94,34 +72,6 @@ public class SecurityConfig {
                 // Con sesión pero sin permiso a nivel filtro → 403.
                 .accessDeniedHandler((request, response, denied) ->
                         response.sendError(HttpStatus.FORBIDDEN.value()))
-            );
-
-        return http.build();
-    }
-
-    // -------------------- Filter chain de las páginas Thymeleaf --------------------
-
-    @Bean
-    @Order(2)
-    public SecurityFilterChain webFilterChain(HttpSecurity http) throws Exception {
-        http
-            .authorizeHttpRequests(auth -> auth
-                // Páginas públicas: home, ver materias, ver reviews, buscar.
-                // "/error" es el dispatch interno de Spring cuando salta una excepción:
-                // si Security lo bloquea, un 404 termina redirigiendo al login.
-                .requestMatchers("/", "/materias", "/materias/**", "/catedra/**", "/buscar", "/registro", "/css/**", "/error").permitAll()
-                // Crear review requiere estar logueado
-                .requestMatchers("/review/**").authenticated()
-                .anyRequest().authenticated()
-            )
-            .formLogin(form -> form
-                .loginPage("/login")
-                .defaultSuccessUrl("/materias")
-                .permitAll()
-            )
-            .logout(logout -> logout
-                .logoutSuccessUrl("/")
-                .permitAll()
             );
 
         return http.build();
