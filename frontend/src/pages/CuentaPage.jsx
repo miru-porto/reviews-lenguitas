@@ -12,17 +12,28 @@ import { Cargando } from '../components/Estado';
  * las dos cosas tienen que poder hacerse solas, sin escribirle a nadie.
  */
 export default function CuentaPage() {
-  const { usuario, cargando, elegirApodo, borrarCuenta } = useAuth();
+  const { usuario, cargando } = useAuth();
+
+  if (cargando) return <Cargando />;
+  if (!usuario) return <Navigate to="/login" replace />;
+
+  // El formulario va en un componente aparte que se monta recién con el usuario
+  // ya cargado. Si estuviera todo acá, el useState del apodo correría en el
+  // primer render — con getMe todavía en vuelo y usuario en null — y el campo
+  // quedaría vacío para siempre: los inicializadores de useState corren una sola
+  // vez y no se enteran de que después llegó el dato.
+  return <FormularioCuenta usuario={usuario} />;
+}
+
+function FormularioCuenta({ usuario }) {
+  const { elegirApodo, borrarCuenta } = useAuth();
   const navigate = useNavigate();
 
-  const [apodo, setApodo] = useState(usuario?.nombre ?? '');
+  const [apodo, setApodo] = useState(usuario.nombre ?? '');
   const [error, setError] = useState('');
   const [ok, setOk] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [confirmando, setConfirmando] = useState(false);
-
-  if (cargando) return <Cargando />;
-  if (!usuario) return <Navigate to="/login" replace />;
 
   async function guardarApodo(e) {
     e.preventDefault();
@@ -54,14 +65,14 @@ export default function CuentaPage() {
   }
 
   return (
-    <div style={{ maxWidth: 520, margin: '0 auto', padding: 'var(--space-6) 0', display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
+    <div style={{ maxWidth: 520, margin: '0 auto', padding: 'var(--space-6) 0', display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
       <h1 style={{ fontSize: 30, fontWeight: 400, margin: 0 }}>Mi cuenta</h1>
 
       {error && <div className="alert alert-error">{error}</div>}
 
-      <form onSubmit={guardarApodo} className="card elev-sm" style={{ padding: 'var(--space-5)', gap: 'var(--space-4)' }}>
+      <form onSubmit={guardarApodo} className="card elev-sm" style={{ padding: 'var(--space-6)', gap: 'var(--space-4)' }}>
         <div>
-          <h3 style={{ margin: 0, marginBottom: 'var(--space-1)' }}>Tu apodo</h3>
+          <h2 style={{ fontSize: 19, margin: 0, marginBottom: 'var(--space-1)' }}>Tu apodo</h2>
           <p className="text-muted" style={{ fontSize: 13, margin: 0 }}>
             Es lo único que se ve junto a tus reseñas. Si lo cambiás, cambia en
             todas las que ya escribiste.
@@ -78,15 +89,15 @@ export default function CuentaPage() {
         </div>
       </form>
 
-      <div className="card elev-sm" style={{ padding: 'var(--space-5)', gap: 'var(--space-3)' }}>
+      <div className="card elev-sm" style={{ padding: 'var(--space-6)', gap: 'var(--space-4)' }}>
         <div>
-          <h3 style={{ margin: 0, marginBottom: 'var(--space-1)' }}>Borrar mi cuenta</h3>
+          <h2 style={{ fontSize: 19, margin: 0, marginBottom: 'var(--space-1)' }}>Borrar mi cuenta</h2>
           <p className="text-muted" style={{ fontSize: 13, margin: 0 }}>
             Se elimina tu cuenta, todas tus reseñas y todos tus votos. Es
             inmediato y no se puede deshacer.
           </p>
         </div>
-        <Button variant="danger" onClick={() => setConfirmando(true)} style={{ alignSelf: 'flex-start' }}>
+        <Button variant="danger" onClick={() => setConfirmando(true)} className="btn-acorde">
           Borrar mi cuenta
         </Button>
       </div>

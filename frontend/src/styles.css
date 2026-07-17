@@ -190,6 +190,13 @@ a.card:hover, .card-link:hover { box-shadow: var(--shadow-md); }
 .card-hover { transition: box-shadow .15s ease, transform .15s ease; }
 .card-hover:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
 
+/* Botón dentro de una .card (que es flex column): en desktop mide lo que su
+   texto, en mobile ocupa el ancho completo — es donde el pulgar lo busca. */
+.btn-acorde { align-self: flex-start; }
+@media (max-width: 700px) {
+  .btn-acorde { align-self: stretch; }
+}
+
 /* ---- tags ---- */
 .tag {
   display: inline-flex; align-items: center; font-size: 11px;
@@ -407,14 +414,14 @@ button.tag:disabled { cursor: default; }
   padding-top: var(--space-4); border-top: 1px solid var(--color-divider);
 }
 .prosa p { margin: 0 0 var(--space-3); }
-.prosa ul { margin: 0 0 var(--space-3); padding-left: var(--space-5); }
+.prosa ul { margin: 0 0 var(--space-3); padding-left: var(--space-8); }
 .prosa li { margin-bottom: var(--space-2); }
 .prosa strong { color: var(--color-text); font-weight: 600; }
 
 /* ---- footer ---- */
 .footer {
   border-top: 1px solid var(--color-divider);
-  padding: var(--space-5) var(--space-6);
+  padding: var(--space-6);
   display: flex; gap: var(--space-4); justify-content: center; flex-wrap: wrap;
   font-size: 12px; color: color-mix(in srgb, var(--color-text) 50%, transparent);
 }

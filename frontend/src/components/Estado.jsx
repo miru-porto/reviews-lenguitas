@@ -66,7 +66,7 @@ export function Cargando({ demoraMs = 4000 }) {
 
           <div
             style={{
-              marginTop: 'var(--space-5)', paddingTop: 'var(--space-4)',
+              marginTop: 'var(--space-6)', paddingTop: 'var(--space-4)',
               borderTop: '1px solid var(--color-divider)',
             }}
           >
