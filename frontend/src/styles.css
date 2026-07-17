@@ -345,6 +345,44 @@ button.tag:disabled { cursor: default; }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* ---- servidor dormido ----
+   Las "z" que suben mientras Render despierta (ver Estado.jsx). Reemplazan al
+   spinner en esa espera: un spinner dice "estoy trabajando", y acá lo honesto
+   es "está durmiendo". Cada z sale escalonada con su animation-delay. */
+.zzz { position: relative; width: 56px; height: 44px; }
+.zzz span {
+  position: absolute; bottom: 0; left: 0;
+  font-family: var(--font-heading); font-weight: 600; line-height: 1;
+  color: var(--color-accent); opacity: 0;
+  animation: zzz-sube 3.6s ease-in-out infinite;
+}
+.zzz span:nth-child(1) { font-size: 13px; animation-delay: 0s; }
+.zzz span:nth-child(2) { font-size: 17px; animation-delay: 1.2s; }
+.zzz span:nth-child(3) { font-size: 22px; animation-delay: 2.4s; }
+@keyframes zzz-sube {
+  0%   { opacity: 0; transform: translate(0, 10px) rotate(-8deg); }
+  25%  { opacity: .85; }
+  70%  { opacity: .5; }
+  100% { opacity: 0; transform: translate(26px, -30px) rotate(12deg); }
+}
+
+/* el dato curioso que rota mientras esperás: entra suave para que el cambio se
+   note sin sobresaltar */
+.dato-curioso { animation: dato-entra .5s ease-out; }
+@keyframes dato-entra {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Quien pidió menos movimiento no debería marearse por una decoración: las z se
+   quedan quietas y visibles, que comunican lo mismo sin flotar. */
+@media (prefers-reduced-motion: reduce) {
+  .zzz span { animation: none; opacity: .6; position: static; }
+  .zzz { display: flex; align-items: baseline; gap: 3px; width: auto; height: auto; }
+  .spinner { animation-duration: 2s; }
+  .dato-curioso { animation: none; }
+}
+
 /* ---- layout app ---- */
 .container { max-width: 1000px; margin: 0 auto; padding: var(--space-8) var(--space-6); }
 .section-grid {
