@@ -4,6 +4,7 @@ import com.lenguas.ratemyprof.model.Review;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.util.List;
@@ -46,4 +47,9 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     /** ¿La cátedra tiene reviews? Bloquea el borrado de cátedras desde el admin. */
     boolean existsByCatedraId(Long catedraId);
+
+    /** Todas las reviews de un usuario (ver UsuarioService.borrarCuenta). */
+    @Modifying
+    @Query("DELETE FROM Review r WHERE r.usuario.id = :usuarioId")
+    void borrarReviewsDe(@Param("usuarioId") Long usuarioId);
 }

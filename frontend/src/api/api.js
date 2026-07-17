@@ -163,6 +163,14 @@ export function logout() {
   return enviar('POST', '/api/auth/logout');
 }
 
+/**
+ * DELETE /api/auth/cuenta → 204. Borra la cuenta, las reviews y los votos, y
+ * cierra la sesión del lado del backend. Definitivo: no hay papelera.
+ */
+export function borrarCuenta() {
+  return enviar('DELETE', '/api/auth/cuenta');
+}
+
 /** GET /api/auth/me → UsuarioView del usuario logueado, o 401 si no hay sesión. */
 export function getMe() {
   return get('/api/auth/me');

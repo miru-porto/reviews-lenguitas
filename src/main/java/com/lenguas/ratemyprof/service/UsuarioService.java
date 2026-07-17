@@ -2,7 +2,9 @@ package com.lenguas.ratemyprof.service;
 
 import com.lenguas.ratemyprof.model.Rol;
 import com.lenguas.ratemyprof.model.Usuario;
+import com.lenguas.ratemyprof.repository.ReviewRepository;
 import com.lenguas.ratemyprof.repository.UsuarioRepository;
+import com.lenguas.ratemyprof.repository.VotoUtilRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.authority.AuthorityUtils;
@@ -16,6 +18,8 @@ import java.util.Optional;
 public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
+    private final ReviewRepository reviewRepository;
+    private final VotoUtilRepository votoUtilRepository;
 
     /**
      * Email que recibe rol ADMIN al entrar. Va por variable de entorno y no
@@ -65,6 +69,32 @@ public class UsuarioService {
         Usuario usuario = findByGoogleSub(googleSub);
         usuario.setNombre(apodo);
         return usuarioRepository.save(usuario);
+    }
+
+    /**
+     * Baja de cuenta: borra a la persona y todo lo que dejó. Es definitivo y no
+     * hay papelera — es lo que promete la política de privacidad.
+     *
+     * El orden lo manda el grafo de claves foráneas, que a propósito no borra en
+     * cascada (así nada desaparece por accidente desde otro lado):
+     *   1. los votos que OTROS dejaron en mis reviews — si no, las reviews no salen;
+     *   2. los votos que yo dejé en reviews ajenas;
+     *   3. mis reviews;
+     *   4. yo.
+     * Todo en una transacción: si algo falla, no queda media cuenta borrada.
+     *
+     * Se van también las reviews, y eso le cuesta contenido al sitio. Es
+     * deliberado: alguien que pide borrar sus datos espera que desaparezcan, no
+     * que sus opiniones sigan publicadas bajo un "usuario eliminado".
+     */
+    @Transactional
+    public void borrarCuenta(String googleSub) {
+        Usuario usuario = findByGoogleSub(googleSub);
+
+        votoUtilRepository.borrarVotosSobreReviewsDe(usuario.getId());
+        votoUtilRepository.borrarVotosDe(usuario.getId());
+        reviewRepository.borrarReviewsDe(usuario.getId());
+        usuarioRepository.delete(usuario);
     }
 
     /** Busca por el id de Google sin fallar. */

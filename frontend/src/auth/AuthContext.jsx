@@ -49,7 +49,17 @@ export function AuthProvider({ children }) {
     setUsuario(null);
   }
 
-  const valor = { usuario, cargando, login, elegirApodo, logout };
+  /**
+   * Borra la cuenta y todo lo que la persona dejó. El backend además invalida
+   * la sesión, así que acá alcanza con olvidar al usuario: la cookie que queda
+   * ya no apunta a nada.
+   */
+  async function borrarCuenta() {
+    await api.borrarCuenta();
+    setUsuario(null);
+  }
+
+  const valor = { usuario, cargando, login, elegirApodo, logout, borrarCuenta };
   return <AuthContext.Provider value={valor}>{children}</AuthContext.Provider>;
 }
 

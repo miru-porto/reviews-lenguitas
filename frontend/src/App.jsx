@@ -6,6 +6,8 @@ import ReviewsPage from './pages/ReviewsPage';
 import BuscarPage from './pages/BuscarPage';
 import LoginPage from './pages/LoginPage';
 import ApodoPage from './pages/ApodoPage';
+import CuentaPage from './pages/CuentaPage';
+import PrivacidadPage from './pages/PrivacidadPage';
 import AdminPage from './pages/AdminPage';
 import { useAuth } from './auth/AuthContext';
 
@@ -20,6 +22,8 @@ import { useAuth } from './auth/AuthContext';
  *  /buscar?q=...         → resultados de búsqueda
  *  /login                → botón de ingreso con Google
  *  /apodo                → elección del apodo, tras el primer ingreso
+ *  /cuenta               → cambiar el apodo y borrar la cuenta
+ *  /privacidad           → política de privacidad
  *  /admin                → CRUD del catálogo (solo rol ADMIN; la página redirige si no)
  */
 export default function App() {
@@ -32,7 +36,10 @@ export default function App() {
   return (
     <Routes>
       <Route element={<Layout />}>
+        {/* Fuera del guard de apodo: la política tiene que poder leerse SIEMPRE,
+            justo cuando estás decidiendo si seguir o irte. */}
         <Route path="apodo" element={<ApodoPage />} />
+        <Route path="privacidad" element={<PrivacidadPage />} />
         {faltaApodo ? (
           <Route path="*" element={<Navigate to="/apodo" replace />} />
         ) : (
@@ -43,6 +50,7 @@ export default function App() {
             <Route path="catedras/:catedraId" element={<ReviewsPage />} />
             <Route path="buscar" element={<BuscarPage />} />
             <Route path="login" element={<LoginPage />} />
+            <Route path="cuenta" element={<CuentaPage />} />
             <Route path="admin" element={<AdminPage />} />
             {/* Cualquier ruta desconocida vuelve al inicio. */}
             <Route path="*" element={<Navigate to="/" replace />} />

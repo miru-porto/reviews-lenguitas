@@ -2,6 +2,7 @@ package com.lenguas.ratemyprof.repository;
 
 import com.lenguas.ratemyprof.model.VotoUtil;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -26,4 +27,20 @@ public interface VotoUtilRepository extends JpaRepository<VotoUtil, Long> {
     /** Ids de las reviews de la cátedra que el usuario logueado ya votó. */
     @Query("SELECT v.review.id FROM VotoUtil v WHERE v.usuario.googleSub = :googleSub AND v.review.catedra.id = :catedraId")
     List<Long> reviewIdsVotadasPor(@Param("googleSub") String googleSub, @Param("catedraId") Long catedraId);
+
+    // ---- Baja de cuenta (ver UsuarioService.borrarCuenta) ----
+
+    /**
+     * Los votos que OTRAS personas dejaron en las reviews de este usuario. Hay
+     * que borrarlos antes que las reviews o la FK lo impide. Va con subquery
+     * porque un DELETE de JPQL no admite navegar relaciones (v.review.usuario).
+     */
+    @Modifying
+    @Query("DELETE FROM VotoUtil v WHERE v.review.id IN (SELECT r.id FROM Review r WHERE r.usuario.id = :usuarioId)")
+    void borrarVotosSobreReviewsDe(@Param("usuarioId") Long usuarioId);
+
+    /** Los votos que este usuario dejó en reviews ajenas. */
+    @Modifying
+    @Query("DELETE FROM VotoUtil v WHERE v.usuario.id = :usuarioId")
+    void borrarVotosDe(@Param("usuarioId") Long usuarioId);
 }

@@ -3,9 +3,14 @@ package com.lenguas.ratemyprof.controller.api;
 import com.lenguas.ratemyprof.dto.ApodoRequest;
 import com.lenguas.ratemyprof.dto.UsuarioView;
 import com.lenguas.ratemyprof.service.UsuarioService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -47,5 +52,26 @@ public class AuthApiController {
     @PutMapping("/apodo")
     public UsuarioView apodo(@Valid @RequestBody ApodoRequest req, Authentication auth) {
         return UsuarioView.de(usuarioService.elegirApodo(auth.getName(), req.getApodo()));
+    }
+
+    /**
+     * Baja de cuenta: borra la persona, sus reviews y sus votos, y la deja
+     * deslogueada. 204. Es el derecho de supresión de la política de privacidad,
+     * self-service: nadie tiene que pedirle permiso a nadie.
+     *
+     * La sesión se invalida acá mismo: sin esto la cookie seguiría viva apuntando
+     * a un usuario que ya no existe, y el próximo request explotaría.
+     */
+    @DeleteMapping("/cuenta")
+    public ResponseEntity<Void> borrarCuenta(Authentication auth, HttpServletRequest request) {
+        usuarioService.borrarCuenta(auth.getName());
+
+        HttpSession sesion = request.getSession(false);
+        if (sesion != null) {
+            sesion.invalidate();
+        }
+        SecurityContextHolder.clearContext();
+
+        return ResponseEntity.noContent().build();
     }
 }

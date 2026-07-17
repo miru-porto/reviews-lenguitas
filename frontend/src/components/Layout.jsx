@@ -83,7 +83,9 @@ export default function Layout() {
                 {usuario.rol === 'ADMIN' && (
                   <Button as={RouterLink} to="/admin" variant="ghost">Admin</Button>
                 )}
-                <span className="text-muted" style={{ fontSize: 14 }}>{usuario.nombre}</span>
+                <RouterLink to="/cuenta" className="text-muted" style={{ fontSize: 14, textDecoration: 'none', color: 'inherit' }}>
+                  {usuario.nombre}
+                </RouterLink>
                 <Button variant="secondary" onClick={onLogout}>Salir</Button>
               </>
             ) : (
@@ -116,6 +118,7 @@ export default function Layout() {
                   {usuario.rol === 'ADMIN' && (
                     <RouterLink to="/admin" className="menu-item" onClick={() => setMenuAbierto(false)}>Admin</RouterLink>
                   )}
+                  <RouterLink to="/cuenta" className="menu-item" onClick={() => setMenuAbierto(false)}>Mi cuenta</RouterLink>
                   <button type="button" className="menu-item" onClick={onLogout}>Salir</button>
                 </>
               ) : (
@@ -129,6 +132,11 @@ export default function Layout() {
       <main className="container">
         <Outlet />
       </main>
+
+      <footer className="footer">
+        <span>Rate My Prof LV · proyecto independiente, sin afiliación con la institución</span>
+        <RouterLink to="/privacidad">Privacidad</RouterLink>
+      </footer>
 
       <Cafecito />
     </div>
