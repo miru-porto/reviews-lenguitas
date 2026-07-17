@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://REEMPLAZAR-POR-TU-BACKEND.onrender.com/api/:path*"
+      "destination": "https://reviews-lenguitas.onrender.com/api/:path*"
     },
     {
       "source": "/(.*)",
