@@ -41,7 +41,7 @@ public class ReviewApiController {
     @PostMapping
     public ResponseEntity<ReviewCreadaResponse> crear(@Valid @RequestBody CrearReviewRequest req,
                                                       Authentication auth) {
-        Usuario usuario = usuarioService.findByDni(auth.getName());
+        Usuario usuario = usuarioService.findByGoogleSub(auth.getName());
         Review review = reviewService.crear(
                 req.getCatedraId(), usuario, req.getPuntuacion(), req.getComentario(),
                 req.getCuatrimestre());
@@ -54,7 +54,7 @@ public class ReviewApiController {
     public ResponseEntity<Void> editar(@PathVariable Long id,
                                        @Valid @RequestBody ReviewForm form,
                                        Authentication auth) {
-        Usuario usuario = usuarioService.findByDni(auth.getName());
+        Usuario usuario = usuarioService.findByGoogleSub(auth.getName());
         reviewService.editar(id, usuario, form.getPuntuacion(), form.getComentario(),
                 form.getCuatrimestre());
         return ResponseEntity.noContent().build();
@@ -63,7 +63,7 @@ public class ReviewApiController {
     /** Borrar una review propia. 204; el service verifica el dueño. */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> borrar(@PathVariable Long id, Authentication auth) {
-        Usuario usuario = usuarioService.findByDni(auth.getName());
+        Usuario usuario = usuarioService.findByGoogleSub(auth.getName());
         reviewService.eliminar(id, usuario);
         return ResponseEntity.noContent().build();
     }
@@ -74,7 +74,7 @@ public class ReviewApiController {
      */
     @PostMapping("/{id}/util")
     public ResponseEntity<Void> votarUtil(@PathVariable Long id, Authentication auth) {
-        Usuario usuario = usuarioService.findByDni(auth.getName());
+        Usuario usuario = usuarioService.findByGoogleSub(auth.getName());
         reviewService.votarUtil(id, usuario);
         return ResponseEntity.noContent().build();
     }

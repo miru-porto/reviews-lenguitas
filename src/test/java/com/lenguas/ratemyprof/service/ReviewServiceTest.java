@@ -266,23 +266,23 @@ class ReviewServiceTest {
     @Test
     void yaReviewo_devuelveFalseSinSesionSinTocarLaBase() {
         assertThat(reviewService.yaReviewo(10L, null)).isFalse();
-        verify(reviewRepository, never()).existsByUsuarioDniAndCatedraId(any(), any());
+        verify(reviewRepository, never()).existsByUsuarioGoogleSubAndCatedraId(any(), any());
     }
 
     @Test
-    void yaReviewo_consultaPorDniYCatedra() {
-        when(reviewRepository.existsByUsuarioDniAndCatedraId("11111111", 10L)).thenReturn(true);
+    void yaReviewo_consultaPorGoogleSubYCatedra() {
+        when(reviewRepository.existsByUsuarioGoogleSubAndCatedraId("11111111", 10L)).thenReturn(true);
 
         assertThat(reviewService.yaReviewo(10L, "11111111")).isTrue();
     }
 
     // ---------- helpers ----------
 
-    private static Usuario usuario(Long id, String nombre, String dni) {
+    private static Usuario usuario(Long id, String nombre, String googleSub) {
         Usuario u = new Usuario();
         u.setId(id);
         u.setNombre(nombre);
-        u.setDni(dni);
+        u.setGoogleSub(googleSub);
         return u;
     }
 }

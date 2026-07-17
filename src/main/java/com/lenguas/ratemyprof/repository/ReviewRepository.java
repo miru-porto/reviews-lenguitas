@@ -28,8 +28,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             countQuery = "SELECT COUNT(r) FROM Review r WHERE r.catedra.id = :catedraId")
     Page<Review> findByCatedraIdOrdenVotosUtiles(@Param("catedraId") Long catedraId, Pageable pageable);
 
-    /** ¿El usuario (por DNI) ya dejó review en esta cátedra? */
-    boolean existsByUsuarioDniAndCatedraId(String dni, Long catedraId);
+    /** ¿El usuario (por su id de Google) ya dejó review en esta cátedra? */
+    boolean existsByUsuarioGoogleSubAndCatedraId(String googleSub, Long catedraId);
 
     @Query("SELECT AVG(r.puntuacion) FROM Review r WHERE r.catedra.id = :catedraId")
     Double promedioByCatedraId(@Param("catedraId") Long catedraId);

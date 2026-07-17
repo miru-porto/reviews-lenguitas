@@ -44,7 +44,7 @@ public class ReviewService {
      * cantidad de votos útiles. El orden lo aplica la base (ver repository):
      * ordenar en memoria una página ya cortada daría un ranking global roto.
      */
-    public Page<ReviewView> findByCatedra(Long catedraId, String dniUsuarioActual, String orden, Pageable pageable) {
+    public Page<ReviewView> findByCatedra(Long catedraId, String googleSubActual, String orden, Pageable pageable) {
         Page<Review> pagina = ORDEN_UTILES.equals(orden)
                 ? reviewRepository.findByCatedraIdOrdenVotosUtiles(catedraId, pageable)
                 : reviewRepository.findByCatedraIdOrderByFechaCreacionDesc(catedraId, pageable);
@@ -54,9 +54,9 @@ public class ReviewService {
         for (Object[] fila : votoUtilRepository.contarPorReviewDeCatedra(catedraId)) {
             votosPorReview.put((Long) fila[0], (Long) fila[1]);
         }
-        Set<Long> misVotos = dniUsuarioActual == null
+        Set<Long> misVotos = googleSubActual == null
                 ? Set.of()
-                : Set.copyOf(votoUtilRepository.reviewIdsVotadasPor(dniUsuarioActual, catedraId));
+                : Set.copyOf(votoUtilRepository.reviewIdsVotadasPor(googleSubActual, catedraId));
 
         return pagina.map(r -> new ReviewView(
                 r.getId(),
@@ -65,7 +65,7 @@ public class ReviewService {
                 r.getComentario(),
                 r.getCuatrimestre(),
                 r.getFechaCreacion().format(FORMATO_FECHA),
-                dniUsuarioActual != null && dniUsuarioActual.equals(r.getUsuario().getDni()),
+                googleSubActual != null && googleSubActual.equals(r.getUsuario().getGoogleSub()),
                 votosPorReview.getOrDefault(r.getId(), 0L),
                 misVotos.contains(r.getId())
         ));
@@ -76,8 +76,8 @@ public class ReviewService {
      * cliente ya no puede deducirlo mirando las reviews (la propia puede caer
      * en otra página), así que se lo decimos explícitamente en el detalle.
      */
-    public boolean yaReviewo(Long catedraId, String dniUsuario) {
-        return dniUsuario != null && reviewRepository.existsByUsuarioDniAndCatedraId(dniUsuario, catedraId);
+    public boolean yaReviewo(Long catedraId, String googleSubUsuario) {
+        return googleSubUsuario != null && reviewRepository.existsByUsuarioGoogleSubAndCatedraId(googleSubUsuario, catedraId);
     }
 
     /**

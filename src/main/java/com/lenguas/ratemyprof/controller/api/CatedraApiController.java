@@ -62,11 +62,11 @@ public class CatedraApiController {
     @GetMapping("/{id}")
     public CatedraDetalle detalle(@PathVariable Long id, Authentication auth) {
         // findViewById lanza NotFoundException si la cátedra no existe.
-        String dni = (auth != null) ? auth.getName() : null;
+        String googleSub = (auth != null) ? auth.getName() : null;
         return new CatedraDetalle(
                 catedraService.findViewById(id),
                 catedraService.desgloseRating(id),
-                reviewService.yaReviewo(id, dni));
+                reviewService.yaReviewo(id, googleSub));
     }
 
     /**
@@ -85,12 +85,12 @@ public class CatedraApiController {
                                           @RequestParam(defaultValue = "" + TAMANIO_PAGINA_DEFAULT) int size,
                                           Authentication auth) {
         catedraService.findViewById(id); // 404 si la cátedra no existe
-        String dni = (auth != null) ? auth.getName() : null;
+        String googleSub = (auth != null) ? auth.getName() : null;
         // Valores fuera de rango se acotan en vez de responder 400: simplifica el cliente.
         PageRequest pagina = PageRequest.of(
                 Math.max(page, 0),
                 Math.clamp(size, 1, TAMANIO_PAGINA_MAX));
-        return new PagedModel<>(reviewService.findByCatedra(id, dni, orden, pagina));
+        return new PagedModel<>(reviewService.findByCatedra(id, googleSub, orden, pagina));
     }
 
     // -------------------- CRUD (ADMIN) --------------------

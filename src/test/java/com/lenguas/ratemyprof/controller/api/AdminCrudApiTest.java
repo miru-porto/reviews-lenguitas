@@ -1,5 +1,6 @@
 package com.lenguas.ratemyprof.controller.api;
 
+import com.lenguas.ratemyprof.config.GoogleOidcUserService;
 import com.lenguas.ratemyprof.config.SecurityConfig;
 import com.lenguas.ratemyprof.dto.MateriaView;
 import com.lenguas.ratemyprof.exception.ApiExceptionHandler;
@@ -47,6 +48,11 @@ class AdminCrudApiTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    // SecurityConfig lo pide para armar el oauth2Login; el slice web no lo
+    // trae solo porque es un @Service.
+    @MockBean
+    private GoogleOidcUserService googleOidcUserService;
 
     @MockBean
     private AdminService adminService;

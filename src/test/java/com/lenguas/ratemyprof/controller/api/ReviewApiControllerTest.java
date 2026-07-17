@@ -1,6 +1,7 @@
 package com.lenguas.ratemyprof.controller.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.lenguas.ratemyprof.config.GoogleOidcUserService;
 import com.lenguas.ratemyprof.config.SecurityConfig;
 import com.lenguas.ratemyprof.dto.CrearReviewRequest;
 import com.lenguas.ratemyprof.dto.ReviewForm;
@@ -48,12 +49,17 @@ class ReviewApiControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+    // SecurityConfig lo pide para armar el oauth2Login; el slice web no lo
+    // trae solo porque es un @Service.
+    @MockBean
+    private GoogleOidcUserService googleOidcUserService;
+
     @MockBean
     private ReviewService reviewService;
     @MockBean
     private UsuarioService usuarioService;
 
-    private static final String DNI = "30111222";
+    private static final String SUB = "104512345678901234567";
 
     private CrearReviewRequest crearRequest() {
         CrearReviewRequest req = new CrearReviewRequest();
@@ -78,7 +84,7 @@ class ReviewApiControllerTest {
     // ---------- 400 body inválido ----------
 
     @Test
-    @WithMockUser(username = DNI)
+    @WithMockUser(username = SUB)
     void post_bodyInvalido_devuelve400ConCampos() throws Exception {
         CrearReviewRequest req = crearRequest();
         req.setComentario("");   // @NotBlank
@@ -97,11 +103,11 @@ class ReviewApiControllerTest {
     // ---------- 201 feliz ----------
 
     @Test
-    @WithMockUser(username = DNI)
+    @WithMockUser(username = SUB)
     void post_feliz_devuelve201ConId() throws Exception {
         Usuario ana = new Usuario();
         ana.setId(1L);
-        ana.setDni(DNI);
+        ana.setGoogleSub(SUB);
         Catedra catedra = new Catedra();
         catedra.setId(10L);
         Review creada = new Review();
@@ -109,7 +115,7 @@ class ReviewApiControllerTest {
         creada.setCatedra(catedra);
         creada.setUsuario(ana);
 
-        when(usuarioService.findByDni(DNI)).thenReturn(ana);
+        when(usuarioService.findByGoogleSub(SUB)).thenReturn(ana);
         when(reviewService.crear(eq(10L), eq(ana), eq(5), any(), any())).thenReturn(creada);
 
         mockMvc.perform(post("/api/reviews")
@@ -124,12 +130,12 @@ class ReviewApiControllerTest {
     // ---------- 403 review ajena ----------
 
     @Test
-    @WithMockUser(username = DNI)
+    @WithMockUser(username = SUB)
     void put_reviewAjena_devuelve403() throws Exception {
         Usuario ana = new Usuario();
         ana.setId(1L);
-        ana.setDni(DNI);
-        when(usuarioService.findByDni(DNI)).thenReturn(ana);
+        ana.setGoogleSub(SUB);
+        when(usuarioService.findByGoogleSub(SUB)).thenReturn(ana);
         when(reviewService.editar(anyLong(), any(), any(), any(), any()))
                 .thenThrow(new ForbiddenException("No tenés permiso para modificar esta review"));
 
@@ -149,12 +155,12 @@ class ReviewApiControllerTest {
     // ---------- 204 borrar ----------
 
     @Test
-    @WithMockUser(username = DNI)
+    @WithMockUser(username = SUB)
     void delete_feliz_devuelve204() throws Exception {
         Usuario ana = new Usuario();
         ana.setId(1L);
-        ana.setDni(DNI);
-        when(usuarioService.findByDni(DNI)).thenReturn(ana);
+        ana.setGoogleSub(SUB);
+        when(usuarioService.findByGoogleSub(SUB)).thenReturn(ana);
         when(reviewService.eliminar(eq(5L), eq(ana))).thenReturn(10L);
 
         mockMvc.perform(delete("/api/reviews/5").with(csrf()))

@@ -1,60 +1,85 @@
 package com.lenguas.ratemyprof.service;
 
-import com.lenguas.ratemyprof.exception.ConflictException;
+import com.lenguas.ratemyprof.model.Rol;
 import com.lenguas.ratemyprof.model.Usuario;
 import com.lenguas.ratemyprof.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.authority.AuthorityUtils;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class UsuarioService implements UserDetailsService {
+public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
 
     /**
-     * Spring Security usa este método para resolver un usuario por su "username".
-     * En nuestro caso el username es el DNI. No hay contraseña: la autenticación
-     * es solo por identidad (ver AuthApiController), así que el password del
-     * UserDetails queda vacío y nunca se compara.
+     * Email que recibe rol ADMIN al entrar. Va por variable de entorno y no
+     * hardcodeado: el repo es público y no queremos publicar un mail personal,
+     * y así se cambia sin migración ni deploy de código. Vacío = nadie es admin.
      */
-    @Override
-    public UserDetails loadUserByUsername(String dni) throws UsernameNotFoundException {
-        Usuario usuario = usuarioRepository.findByDni(dni)
-                .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + dni));
+    @Value("${app.admin-email:}")
+    private String adminEmail;
 
-        return new User(usuario.getDni(), "",
-                AuthorityUtils.createAuthorityList("ROLE_" + usuario.getRol().name()));
-    }
+    /**
+     * Punto de entrada del login con Google: busca al usuario por su 'sub' y si
+     * no existe lo crea. Se llama en cada ingreso (ver GoogleOidcUserService),
+     * así que también sirve para refrescar datos que hayan cambiado del lado de
+     * Google (el email) y para recalcular el rol.
+     *
+     * El apodo NO se completa acá: queda null a propósito y el front pide uno
+     * antes de dejar reseñar (ver Usuario.nombre).
+     */
+    @Transactional
+    public Usuario ingresarConGoogle(String googleSub, String email) {
+        Usuario usuario = usuarioRepository.findByGoogleSub(googleSub)
+                .orElseGet(() -> {
+                    Usuario nuevo = new Usuario();
+                    nuevo.setGoogleSub(googleSub);
+                    return nuevo;
+                });
 
-    /** Alta de un usuario nuevo. 409 si el DNI ya está registrado. */
-    public Usuario registrar(String dni, String nombre) {
-        if (usuarioRepository.existsByDni(dni)) {
-            throw new ConflictException("Ya existe un usuario con ese DNI");
-        }
-
-        Usuario usuario = new Usuario();
-        usuario.setDni(dni);
-        usuario.setNombre(nombre);
+        usuario.setEmail(email);
+        usuario.setRol(esAdmin(email) ? Rol.ADMIN : Rol.USER);
 
         return usuarioRepository.save(usuario);
     }
 
-    /** Busca por DNI sin fallar: lo usa el login para decidir alta vs ingreso. */
-    public Optional<Usuario> buscarPorDni(String dni) {
-        return usuarioRepository.findByDni(dni);
+    /**
+     * El rol se decide en CADA ingreso a partir del email, no se guarda a mano:
+     * si mañana cambia ADMIN_EMAIL, el admin viejo deja de serlo al reingresar
+     * sin que haya que tocar la base.
+     */
+    private boolean esAdmin(String email) {
+        return adminEmail != null && !adminEmail.isBlank()
+                && adminEmail.equalsIgnoreCase(email);
     }
 
-    /** Igual que buscarPorDni pero exige que exista (usuario ya autenticado). */
-    public Usuario findByDni(String dni) {
-        return usuarioRepository.findByDni(dni)
+    /** Elige el apodo público. Es lo único que se muestra junto a una review. */
+    @Transactional
+    public Usuario elegirApodo(String googleSub, String apodo) {
+        Usuario usuario = findByGoogleSub(googleSub);
+        usuario.setNombre(apodo);
+        return usuarioRepository.save(usuario);
+    }
+
+    /** Busca por el id de Google sin fallar. */
+    public Optional<Usuario> buscarPorGoogleSub(String googleSub) {
+        return usuarioRepository.findByGoogleSub(googleSub);
+    }
+
+    /** Igual que el anterior pero exige que exista (usuario ya autenticado). */
+    public Usuario findByGoogleSub(String googleSub) {
+        return usuarioRepository.findByGoogleSub(googleSub)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+    }
+
+    /** Authorities de Spring Security para este usuario ("ROLE_USER"/"ROLE_ADMIN"). */
+    public static java.util.List<org.springframework.security.core.GrantedAuthority> authorities(Usuario usuario) {
+        return AuthorityUtils.createAuthorityList("ROLE_" + usuario.getRol().name());
     }
 }

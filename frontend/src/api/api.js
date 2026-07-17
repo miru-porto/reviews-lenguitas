@@ -142,23 +142,23 @@ export function buscar(q) {
   return get(`/api/buscar?q=${encodeURIComponent(q)}`);
 }
 
-// ---- Autenticación (Fase 4) ----
+// ---- Autenticación (login con Google) ----
+//
+// El ingreso NO pasa por acá: es una navegación del navegador a
+// /api/oauth2/authorization/google, que Spring Security intercepta y manda a
+// Google (ver AuthContext.login). Un fetch no serviría: el flujo OAuth necesita
+// que la persona vea la pantalla de Google y vuelva. Acá quedan solo las
+// llamadas normales sobre una sesión ya iniciada.
 
 /**
- * POST /api/auth/login → UsuarioView si el DNI existe. Si no existe, el backend
- * responde 404: enviar lanza ApiError con status 404, y la pantalla de login lo
- * interpreta como "hay que registrarse".
+ * PUT /api/auth/apodo → UsuarioView con el apodo nuevo. Requiere sesión.
+ * 400 si el apodo está vacío o no mide entre 2 y 40 caracteres.
  */
-export function login(dni) {
-  return enviar('POST', '/api/auth/login', { dni });
+export function elegirApodo(apodo) {
+  return enviar('PUT', '/api/auth/apodo', { apodo });
 }
 
-/** POST /api/auth/registro → 201 UsuarioView; deja la sesión iniciada. */
-export function registro(dni, nombre) {
-  return enviar('POST', '/api/auth/registro', { dni, nombre });
-}
-
-/** POST /api/auth/logout → 204 (sin cuerpo). */
+/** POST /api/auth/logout → 204 (sin cuerpo). Lo maneja Spring Security. */
 export function logout() {
   return enviar('POST', '/api/auth/logout');
 }

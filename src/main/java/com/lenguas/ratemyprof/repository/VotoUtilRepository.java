@@ -24,6 +24,6 @@ public interface VotoUtilRepository extends JpaRepository<VotoUtil, Long> {
     List<Object[]> contarPorReviewDeCatedra(@Param("catedraId") Long catedraId);
 
     /** Ids de las reviews de la cátedra que el usuario logueado ya votó. */
-    @Query("SELECT v.review.id FROM VotoUtil v WHERE v.usuario.dni = :dni AND v.review.catedra.id = :catedraId")
-    List<Long> reviewIdsVotadasPor(@Param("dni") String dni, @Param("catedraId") Long catedraId);
+    @Query("SELECT v.review.id FROM VotoUtil v WHERE v.usuario.googleSub = :googleSub AND v.review.catedra.id = :catedraId")
+    List<Long> reviewIdsVotadasPor(@Param("googleSub") String googleSub, @Param("catedraId") Long catedraId);
 }

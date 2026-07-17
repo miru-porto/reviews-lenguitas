@@ -18,19 +18,25 @@ public class Usuario {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank
-    @Column(nullable = false)
+    // El apodo público: es lo ÚNICO que se ve junto a una review. Se pide al
+    // entrar por primera vez y NO sale de Google a propósito: Google devuelve el
+    // nombre real, y firmar críticas a profesores con nombre y apellido de cada
+    // estudiante es justo lo que no queremos. Nullable = perfil sin completar,
+    // que es como el front sabe que tiene que pedirlo.
+    @Column
     private String nombre;
 
-    // El DNI es la identidad del usuario: con él se loguea (no hay contraseña).
+    // La identidad: el "sub" de Google, su id estable de usuario. Es el principal
+    // de Spring Security (auth.getName()). Se usa esto y no el email porque el
+    // email puede cambiar de dueño; el sub no cambia nunca.
     @NotBlank
-    @Column(nullable = false, unique = true)
-    private String dni;
+    @Column(name = "google_sub", nullable = false, unique = true)
+    private String googleSub;
 
-    // Opcional: no se pide en el alta por DNI, pero queda la columna por si más
-    // adelante se quiere contactar al usuario. Nullable; único si está presente.
+    // Lo devuelve Google con el scope 'email'. No se muestra en la app: sirve
+    // para reconocer a la admin (ver ADMIN_EMAIL) y para poder contactar.
     @Email
-    @Column(unique = true)
+    @Column(nullable = false, unique = true)
     private String email;
 
     @Column(name = "fecha_registro")
