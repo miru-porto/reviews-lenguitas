@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
+import ScrollAlTope from './components/ScrollAlTope';
 import MateriasPage from './pages/MateriasPage';
 import CatedrasPage from './pages/CatedrasPage';
 import ReviewsPage from './pages/ReviewsPage';
@@ -34,29 +35,30 @@ export default function App() {
   const faltaApodo = !cargando && usuario && !usuario.nombre;
 
   return (
-    <Routes>
-      <Route element={<Layout />}>
-        {/* Fuera del guard de apodo: la política tiene que poder leerse SIEMPRE,
-            justo cuando estás decidiendo si seguir o irte. */}
-        <Route path="apodo" element={<ApodoPage />} />
-        <Route path="privacidad" element={<PrivacidadPage />} />
-        {faltaApodo ? (
-          <Route path="*" element={<Navigate to="/apodo" replace />} />
-        ) : (
-          <>
-            <Route index element={<MateriasPage />} />
-            <Route path="materias" element={<MateriasPage />} />
-            <Route path="materias/:materiaId" element={<CatedrasPage />} />
-            <Route path="catedras/:catedraId" element={<ReviewsPage />} />
-            <Route path="buscar" element={<BuscarPage />} />
-            <Route path="login" element={<LoginPage />} />
-            <Route path="cuenta" element={<CuentaPage />} />
-            <Route path="admin" element={<AdminPage />} />
-            {/* Cualquier ruta desconocida vuelve al inicio. */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </>
-        )}
-      </Route>
-    </Routes>
+    <>
+      <ScrollAlTope />
+      <Routes>
+        <Route element={<Layout />}>
+          <Route path="apodo" element={<ApodoPage />} />
+          <Route path="privacidad" element={<PrivacidadPage />} />
+          {faltaApodo ? (
+            <Route path="*" element={<Navigate to="/apodo" replace />} />
+          ) : (
+            <>
+              <Route index element={<MateriasPage />} />
+              <Route path="materias" element={<MateriasPage />} />
+              <Route path="materias/:materiaId" element={<CatedrasPage />} />
+              <Route path="catedras/:catedraId" element={<ReviewsPage />} />
+              <Route path="buscar" element={<BuscarPage />} />
+              <Route path="login" element={<LoginPage />} />
+              <Route path="cuenta" element={<CuentaPage />} />
+              <Route path="admin" element={<AdminPage />} />
+              {/* Cualquier ruta desconocida vuelve al inicio. */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </>
+          )}
+        </Route>
+      </Routes>
+    </>
   );
 }
