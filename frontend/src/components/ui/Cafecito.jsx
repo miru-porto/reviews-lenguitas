@@ -1,6 +1,6 @@
 import { IconCoffee } from './icons';
 
-const CAFECITO_URL = 'https://cafecito.app/miru-porto';
+const CAFECITO_URL = 'https://cafecito.app/hachiware';
 
 /**
  * Botón flotante de "Invitame un cafecito" (donaciones). Fijo abajo a la
